@@ -100,11 +100,16 @@ not commit the newly-added file.
 
 :CVSAnnotate						*:CVSAnnotate*
 
-This command performs "cvs annotate" on the current file.  If not given an
-argument, uses the most recent version of the file on the current branch.
-Otherwise, the argument is used as a revision number.  The filetype of the
-CVSCommand scratch buffer is set to 'CVSAnnotate', to take advantage of the
-bundled syntax file.
+This command performs "cvs annotate" on the current file.
+If an argument is given, the argument is used as a revision number to display.
+If not given an argument, it uses the most recent version of the file on the
+current branch.  Additionally, if the current buffer is a CVSAnnotate buffer
+already, the version number just prior to the one on the current line is used.
+This allows one to navigate back to examine the previous version of a line.
+
+The filetype of the CVSCommand scratch buffer is set to 'CVSAnnotate', to take
+advantage of the bundled syntax file.
+
 
 :CVSCommit						*:CVSCommit*
 
@@ -402,6 +407,10 @@ CVSPluginInit              This event is fired when the CVSCommand plugin
 
 CVSPluginFinish            This event is fired just after the CVSCommand
                            plugin loads.
+
+CVSVimDiffFinish           This event is fired just after the CVSVimDiff
+                           command executes to allow customization of,
+                           for instance, window placement and focus.
 
 5.3 CVSCommand buffer naming				*cvscommand-naming*
 

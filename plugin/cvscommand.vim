@@ -1,12 +1,12 @@
 " vim600: set foldmethod=marker:
-" $Id: cvscommand.vim,v 1.54 2003/04/28 17:22:14 bob Exp $
+" $Id: cvscommand.vim,v 1.62 2003/07/02 17:02:10 bob Exp $
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   $Date: 2003/04/28 17:22:14 $
+" Last Change:   $Date: 2003/07/02 17:02:10 $
 " Maintainer:    Bob Hiestand <bob@hiestandfamily.org>
 " License:       This file is placed in the public domain.
-" Credits:       Mathieu Clabaut for many suggestions and improvements
+" Credits:       Mathieu Clabaut for many suggestions and improvements.
 "
 "                Suresh Govindachar and Jeeva Chelladhurai for finding waaaay
 "                too many bugs.
@@ -41,9 +41,14 @@
 "
 " CVSAdd           Performs "cvs add" on the current file.
 "
-" CVSAnnotate      Performs "cvs annotate" on the current file.  If not given an
-"                  argument, uses the most recent version of the file on the current
-"                  branch.  Otherwise, the argument is used as a revision number.
+" CVSAnnotate      Performs "cvs annotate" on the current file.  If an
+"                  argument is given, the argument is used as a revision
+"                  number to display.  If not given an argument, it uses the
+"                  most recent version of the file on the current branch.
+"                  Additionally, if the current buffer is a CVSAnnotate buffer
+"                  already, the version number just prior to the one on the
+"                  current line is used.  This allows one to navigate back to
+"                  examine the previous version of a line.
 "
 " CVSCommit        This is a two-stage command.  The first step opens a buffer to
 "                  accept a log message.  When that buffer is written, it is
@@ -222,7 +227,11 @@
 
 "   CVSPluginFinish            This event is fired just after the CVSCommand
 "                              plugin loads.
-
+"
+"   CVSVimDiffFinish           This event is fired just after the CVSVimDiff
+"                              command executes to allow customization of,
+"                              for instance, window placement and focus.
+"
 " Section: Plugin header {{{1
 " loaded_cvscommand is set to 1 when the initialization begins, and 2 when it
 " completes.  This allows various actions to only be taken by functions after
@@ -297,7 +306,7 @@ function! s:CVSEditFile(name, origBuffNR)
 
   let v:errmsg = ""
   let editCommand = s:CVSGetOption('CVSCommandEdit', 'edit')
-  if editCommand != 'edit' 
+  if editCommand != 'edit'
     if s:CVSGetOption('CVSCommandSplit', 'horizontal') == 'horizontal'
       if name == ""
         let editCommand = 'rightbelow new'
@@ -471,15 +480,15 @@ function! s:CVSDoCommand(cmd, cmdName, statusText)
 endfunction
 
 
-" Function: s:CVSGetStatusVars(revision, branch) {{{2
+" Function: s:CVSGetStatusVars(revision, branch, repository) {{{2
 "
-" Obtains a CVS revision number and branch name.  The 'revisionVar' and
-" 'branchVar' arguments, if non-empty, contain the names of variables to hold
+" Obtains a CVS revision number and branch name.  The 'revisionVar',
+" 'branchVar'and 'repositoryVar' arguments, if non-empty, contain the names of variables to hold
 " the corresponding results.
 "
 " Returns: string to be exec'd that sets the multiple return values.
 
-function! s:CVSGetStatusVars(revisionVar, branchVar)
+function! s:CVSGetStatusVars(revisionVar, branchVar, repositoryVar)
   let cvsBufferCheck=s:CVSCurrentBufferCheck()
   if cvsBufferCheck == -1 
     return ""
@@ -513,13 +522,18 @@ function! s:CVSGetStatusVars(revisionVar, branchVar)
     let branch=substitute(statustext, '^\_.*Sticky Tag:\s\+\(\d\+\%(\.\d\+\)\+\|\a[A-Za-z0-9-_]*\|(none)\).*$', '\1', "")
     let returnExpression=returnExpression . " | let " . a:branchVar . "='" . branch . "'"
   endif
+  
+  if a:repositoryVar != ""
+     let repository=substitute(statustext, '^\_.*Repository revision:\s*\(\d\+\%(\.\d\+\)\+\|New file!\)\_.*$', '\1', "")
+     let returnExpression=returnExpression . " | let " . a:repositoryVar . "='" . repository . "'"
+  endif
 
   execute 'cd' escape(oldCwd, ' ')
   return returnExpression
 endfunction
 
 " Function: s:CVSSetupBuffer() {{{2
-" Attempts to set the b:CVSBranch and b:CVSRevision variables.
+" Attempts to set the b:CVSBranch, b:CVSRevision and b:CVSRepository variables.
 
 function! s:CVSSetupBuffer()
   if (exists("b:CVSBufferSetup") && b:CVSBufferSetup)
@@ -532,6 +546,7 @@ function! s:CVSSetupBuffer()
         \ || exists("b:CVSOrigBuffNR")
     unlet! b:CVSRevision
     unlet! b:CVSBranch
+    unlet! b:CVSRepository
     return
   endif
 
@@ -541,8 +556,9 @@ function! s:CVSSetupBuffer()
 
   let revision=""
   let branch=""
+  let repository=""
 
-  exec s:CVSGetStatusVars('revision', 'branch')
+  exec s:CVSGetStatusVars('revision', 'branch', 'repository')
   if revision != ""
     let b:CVSRevision=revision
   else
@@ -552,6 +568,11 @@ function! s:CVSSetupBuffer()
     let b:CVSBranch=branch
   else
     unlet! b:CVSBranch
+  endif
+  if repository != ""
+     let b:CVSRepository=repository
+  else
+     unlet! b:CVSRepository
   endif
   let b:CVSBufferSetup=1
 endfunction
@@ -579,7 +600,7 @@ endfunction
 
 function! CVSGetRevision()
   let revision=""
-  exec s:CVSGetStatusVars('revision', '')
+  exec s:CVSGetStatusVars('revision', '', '')
   return revision
 endfunction
 
@@ -628,9 +649,15 @@ function! CVSGetStatusLine()
         \ && b:CVSRevision != ''
         \ && exists('b:CVSBranch')
         \ && b:CVSBranch != ''
+        \ && exists('b:CVSRepository')
+        \ && b:CVSRepository != ''
         \ && exists('g:CVSCommandEnableBufferSetup')
         \ && g:CVSCommandEnableBufferSetup
-    return '[CVS ' . b:CVSBranch . '/' . b:CVSRevision . ']'
+    if b:CVSRevision == b:CVSRepository
+      return '[CVS ' . b:CVSBranch . '/' . b:CVSRevision . ']'
+    else
+      return '[CVS ' . b:CVSBranch . '/' . b:CVSRevision . '/' . b:CVSRepository . ']'
+    endif
   else
     return ''
   endif
@@ -658,11 +685,24 @@ function! s:CVSAnnotate(...)
   let currentLine=line(".")
 
   if a:0 == 0
-    let revision=CVSGetRevision()
-    if revision == ""
-      echo "Unable to obtain status for " . fileName
-      execute 'cd' escape(oldCwd, ' ')
-      return -1
+    " we already are in a CVS Annotate buffer
+    if &filetype == "CVSAnnotate"
+      let revision = substitute(getline("."),'\(^[0-9.]*\).*','\1','')
+      let revmin = substitute(revision,'^[0-9.]*\.\([0-9]\+\)','\1','') + 0 -1 
+      let revmaj = substitute(revision,'^\([0-9.]*\)\.[0-9]\+','\1','')
+      if revmin == 0
+        " Jump to ancestor branch
+        let revision = substitute(revmaj,'^\([0-9.]*\)\.[0-9]\+','\1','')
+      else
+        let revision=revmaj . "." .  revmin
+      endif
+    else
+      let revision=CVSGetRevision()
+      if revision == ""
+        echo "Unable to obtain status for " . fileName
+        execute 'cd' escape(oldCwd, ' ')
+        return -1
+      endif
     endif
   else
     let revision=a:1
@@ -674,7 +714,7 @@ function! s:CVSAnnotate(...)
     return -1
   endif
 
-  let resultBuffer=s:CVSCreateCommandBuffer('cvs -q annotate -r ' . revision . ' "' . realFileName . '"', 'cvsannotate', '', cvsBufferCheck) 
+  let resultBuffer=s:CVSCreateCommandBuffer('cvs -q annotate -r ' . revision . ' "' . realFileName . '"', 'cvsannotate', revision, cvsBufferCheck) 
   if resultBuffer !=  -1
     exec currentLine
     set filetype=CVSAnnotate
@@ -733,18 +773,18 @@ function! s:CVSCommit()
         \                             '"' . realFileName . '",' .
         \                             cvsBufferCheck . ')<CR>'
 
-  0put ='CVS: ----------------------------------------------------------------------'
-  put =\"CVS: Enter Log.  Lines beginning with `CVS:' are removed automatically\"
-  put ='CVS: Type <leader>cc (or your own <Plug>CVSCommit mapping)'
+  silent 0put ='CVS: ----------------------------------------------------------------------'
+  silent put =\"CVS: Enter Log.  Lines beginning with `CVS:' are removed automatically\"
+  silent put ='CVS: Type <leader>cc (or your own <Plug>CVSCommit mapping)'
 
   if s:CVSGetOption('CVSCommandCommitOnWrite', 1) == 1
     execute 'au CVSCommit BufWritePre' autoPattern 'g/^CVS:/d'
     execute 'au CVSCommit BufWritePost' autoPattern 'call s:CVSFinishCommit("' . messageFileName . '", "' . newCwd . '", "' . realFileName . '", ' . cvsBufferCheck . ') | au! * ' autoPattern
-    put ='CVS: or write this buffer'
+    silent put ='CVS: or write this buffer'
   endif
 
-  put ='CVS: to finish this commit operation'
-  put ='CVS: ----------------------------------------------------------------------'
+  silent put ='CVS: to finish this commit operation'
+  silent put ='CVS: ----------------------------------------------------------------------'
   $
   let b:CVSSourceFile=fileName
   let b:CVSCommand='CVSCommit'
@@ -796,7 +836,14 @@ function! s:CVSGotoOriginal(...)
   if origBuffNR > 0
     if a:0 == 1
       if a:1 == "!"
-        bufdo if exists("b:CVSOrigBuffNR") && b:CVSOrigBuffNR == origBuffNR | bw | endif
+        let buffnr = 0
+        let buffmaxnr = bufnr("$")
+        while buffnr <= buffmaxnr
+          if getbufvar(buffnr, "CVSOrigBuffNR") == origBuffNR
+            execute "bw" buffnr
+          endif
+          let buffnr = buffnr + 1
+        endwhile
       endif
     endif
     execute 'buffer' origBuffNR
@@ -886,21 +933,7 @@ endfunction
 
 " Function: s:CVSVimDiff(...) {{{2
 function! s:CVSVimDiff(...)
-  if(a:0 == 0)
-    let resultBuffer=s:CVSReview()
-    if resultBuffer < 0
-      echomsg "Can't open current CVS revision"
-      return resultBuffer
-    endif
-    diffthis
-  elseif(a:0 == 1)
-    let resultBuffer=s:CVSReview(a:1)
-    if resultBuffer < 0
-      echomsg "Can't open CVS revision " . a:1
-      return resultBuffer
-    endif
-    diffthis
-  else
+  if(a:0 == 2)
     let resultBuffer = s:CVSReview(a:1)
     if resultBuffer < 0
       echomsg "Can't open CVS revision " . a:1
@@ -917,49 +950,64 @@ function! s:CVSVimDiff(...)
       return resultBuffer
     endif
     diffthis
-    return resultBuffer
-  endif
-
-  let originalBuffer=b:CVSOrigBuffNR
-  let originalWindow=bufwinnr(originalBuffer)
-
-  " Don't remove the just-created buffer
-  let savedHideOption = getbufvar(resultBuffer, '&bufhidden')
-  call setbufvar(resultBuffer, '&bufhidden', 'hide')
-
-  execute "hide b" originalBuffer
-
-  " If there's already a VimDiff'ed window, restore it.
-  " There may only be one CVSVimDiff original window at a time.
-
-  if exists("g:CVSCommandRestoreVimDiffStateCmd")
-    execute g:CVSCommandRestoreVimDiffStateCmd
-  endif
-
-  " Store the state of original buffer so that it can reset when the CVS
-  " buffer departs.
-
-  let g:CVSCommandRestoreVimDiffSourceBuffer = originalBuffer
-  let g:CVSCommandRestoreVimDiffScratchBuffer = resultBuffer
-  let g:CVSCommandRestoreVimDiffStateCmd = 
-        \    "call setbufvar(".originalBuffer.", \"&diff\", ".getwinvar(originalWindow, '&diff').")"
-        \ . "|call setbufvar(".originalBuffer.", \"&foldcolumn\", ".getwinvar(originalWindow, '&foldcolumn').")"
-        \ . "|call setbufvar(".originalBuffer.", \"&foldmethod\", '". getwinvar(originalWindow, '&foldmethod')."')"
-        \ . "|call setbufvar(".originalBuffer.", \"&scrollbind\", ".getwinvar(originalWindow, '&scrollbind').")"
-        \ . "|call setbufvar(".originalBuffer.", \"&wrap\", ".getwinvar(originalWindow, '&wrap').")"
-
-  diffthis
-
-  let g:CVSCommandEditFileRunning = 1
-  if s:CVSGetOption('CVSCommandDiffSplit', s:CVSGetOption('CVSCommandSplit', 'vertical')) == 'horizontal'
-    execute "silent rightbelow sbuffer" . resultBuffer
   else
-    execute "silent vert rightbelow sbuffer" . resultBuffer
+    if(a:0 == 0)
+      let resultBuffer=s:CVSReview()
+      if resultBuffer < 0
+        echomsg "Can't open current CVS revision"
+        return resultBuffer
+      endif
+      diffthis
+    else
+      let resultBuffer=s:CVSReview(a:1)
+      if resultBuffer < 0
+        echomsg "Can't open CVS revision " . a:1
+        return resultBuffer
+      endif
+      diffthis
+    endif
+    let originalBuffer=b:CVSOrigBuffNR
+    let originalWindow=bufwinnr(originalBuffer)
+
+    " Don't remove the just-created buffer
+    let savedHideOption = getbufvar(resultBuffer, '&bufhidden')
+    call setbufvar(resultBuffer, '&bufhidden', 'hide')
+
+    execute "hide b" originalBuffer
+
+    " If there's already a VimDiff'ed window, restore it.
+    " There may only be one CVSVimDiff original window at a time.
+
+    if exists("g:CVSCommandRestoreVimDiffStateCmd")
+      execute g:CVSCommandRestoreVimDiffStateCmd
+    endif
+
+    " Store the state of original buffer so that it can reset when the CVS
+    " buffer departs.
+
+    let g:CVSCommandRestoreVimDiffSourceBuffer = originalBuffer
+    let g:CVSCommandRestoreVimDiffScratchBuffer = resultBuffer
+    let g:CVSCommandRestoreVimDiffStateCmd = 
+          \    "call setbufvar(".originalBuffer.", \"&diff\", ".getwinvar(originalWindow, '&diff').")"
+          \ . "|call setbufvar(".originalBuffer.", \"&foldcolumn\", ".getwinvar(originalWindow, '&foldcolumn').")"
+          \ . "|call setbufvar(".originalBuffer.", \"&foldenable\", ".getwinvar(originalWindow, '&foldenable').")"
+          \ . "|call setbufvar(".originalBuffer.", \"&foldmethod\", '". getwinvar(originalWindow, '&foldmethod')."')"
+          \ . "|call setbufvar(".originalBuffer.", \"&scrollbind\", ".getwinvar(originalWindow, '&scrollbind').")"
+          \ . "|call setbufvar(".originalBuffer.", \"&wrap\", ".getwinvar(originalWindow, '&wrap').")"
+
+    diffthis
+
+    let g:CVSCommandEditFileRunning = 1
+    if s:CVSGetOption('CVSCommandDiffSplit', s:CVSGetOption('CVSCommandSplit', 'vertical')) == 'horizontal'
+      execute "silent rightbelow sbuffer" . resultBuffer
+    else
+      execute "silent vert rightbelow sbuffer" . resultBuffer
+    endif
+    unlet g:CVSCommandEditFileRunning
+    call setbufvar(resultBuffer, '&bufhidden', savedHideOption)
   endif
-  unlet g:CVSCommandEditFileRunning
 
-  call setbufvar(resultBuffer, '&bufhidden', savedHideOption)
-
+  silent do CVSCommand User CVSVimDiffFinish
   return resultBuffer
 endfunction
 
@@ -1131,7 +1179,8 @@ function! s:CVSVimDiffRestore(vimDiffBuff)
 endfunction
 
 augroup CVSVimDiffRestore
-au!
+
+  au!
 au BufUnload * call s:CVSVimDiffRestore(expand("<abuf>"))
 augroup END
 

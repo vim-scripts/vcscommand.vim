@@ -1,9 +1,9 @@
 " vim600: set foldmethod=marker:
-" $Id: cvscommand.vim,v 1.62 2003/07/02 17:02:10 bob Exp $
+" $Id: cvscommand.vim,v 1.63 2003/07/03 13:34:15 bob Exp $
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   $Date: 2003/07/02 17:02:10 $
+" Last Change:   $Date: 2003/07/03 13:34:15 $
 " Maintainer:    Bob Hiestand <bob@hiestandfamily.org>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements.
@@ -834,9 +834,10 @@ endfunction
 function! s:CVSGotoOriginal(...)
   let origBuffNR = s:CVSCurrentBufferCheck()
   if origBuffNR > 0
+    execute 'buffer' origBuffNR
     if a:0 == 1
       if a:1 == "!"
-        let buffnr = 0
+        let buffnr = 1
         let buffmaxnr = bufnr("$")
         while buffnr <= buffmaxnr
           if getbufvar(buffnr, "CVSOrigBuffNR") == origBuffNR
@@ -846,7 +847,6 @@ function! s:CVSGotoOriginal(...)
         endwhile
       endif
     endif
-    execute 'buffer' origBuffNR
   endif
 endfunction
 

@@ -1,9 +1,9 @@
 " vim600: set foldmethod=marker:
-" $Id: cvscommand.vim,v 1.52 2003/04/18 14:49:09 bob Exp $
+" $Id: cvscommand.vim,v 1.54 2003/04/28 17:22:14 bob Exp $
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   $Date: 2003/04/18 14:49:09 $
+" Last Change:   $Date: 2003/04/28 17:22:14 $
 " Maintainer:    Bob Hiestand <bob@hiestandfamily.org>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements
@@ -25,7 +25,9 @@
 "
 "                John Sivak for helping to debug Windows issues and suggesting
 "                the CVSEditors and CVSWatchers commands.
-
+"
+"                Igor Levko for the patch to recognize numerical sticky tags.
+"
 " Section: Documentation {{{1
 "
 " Provides functions to invoke various CVS commands on the current file.
@@ -239,9 +241,6 @@ augroup END
 " Section: Plugin initialization {{{1
 silent do CVSCommand User CVSPluginInit
 
-" Section: Useful pattern constants {{{1
-
-let s:CVSCommandTagPattern='\a[A-Za-z0-9-_]*'
 
 " Section: Utility functions {{{1
 
@@ -511,7 +510,7 @@ function! s:CVSGetStatusVars(revisionVar, branchVar)
   let returnExpression = "let " . a:revisionVar . "='" . revision . "'"
 
   if a:branchVar != ""
-    let branch=substitute(statustext, '^\_.*Sticky Tag:\s\+\(' . s:CVSCommandTagPattern . '\|(none)\).*$', '\1', "")
+    let branch=substitute(statustext, '^\_.*Sticky Tag:\s\+\(\d\+\%(\.\d\+\)\+\|\a[A-Za-z0-9-_]*\|(none)\).*$', '\1', "")
     let returnExpression=returnExpression . " | let " . a:branchVar . "='" . branch . "'"
   endif
 

@@ -4,7 +4,7 @@ For instructions on installing this file, type
 	:help add-local-help
 inside Vim.
 
-Author:  Bob Hiestand <bob@hiestandfamily.org>
+Author:  Bob Hiestand <bob.hiestand@gmail.com>
 Credits:  Benji Fisher's excellent MatchIt documentation
 
 ==============================================================================

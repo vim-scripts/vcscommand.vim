@@ -1,10 +1,10 @@
 " vim600: set foldmethod=marker:
-" $Id: cvscommand.vim,v 1.65 2004/08/02 14:26:05 bob Exp $
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   $Date: 2004/08/02 14:26:05 $
-" Maintainer:    Bob Hiestand <robert.hiestand@mindspring.com>
+" Last Change:   2004/09/14
+" Version:       1.66
+" Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements.
 "

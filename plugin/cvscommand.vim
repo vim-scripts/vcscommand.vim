@@ -2,8 +2,8 @@
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   2004/09/14
-" Version:       1.66
+" Last Change:   2004/09/27
+" Version:       1.67
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements.
@@ -27,6 +27,9 @@
 "                the CVSEditors and CVSWatchers commands.
 "
 "                Igor Levko for the patch to recognize numerical sticky tags.
+"
+"                Domink Strasser for the patch to correct the status line for
+"                CVSAdd'd files.
 "
 " Section: Documentation {{{1
 "
@@ -529,7 +532,8 @@ function! s:CVSGetStatusVars(revisionVar, branchVar, repositoryVar)
   endif
   
   if a:repositoryVar != ""
-     let repository=substitute(statustext, '^\_.*Repository revision:\s*\(\d\+\%(\.\d\+\)\+\|New file!\)\_.*$', '\1', "")
+     let repository=substitute(statustext, '^\_.*Repository revision:\s*\(\d\+\%(\.\d\+\)\+\|New file!\|No revision control file\)\_.*$', '\1', "")
+     let repository=substitute(repository, '^New file!\|No revision control file$', 'NEW', "")
      let returnExpression=returnExpression . " | let " . a:repositoryVar . "='" . repository . "'"
   endif
 

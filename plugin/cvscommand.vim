@@ -1,10 +1,10 @@
 " vim600: set foldmethod=marker:
-" $Id: cvscommand.vim,v 1.64 2004/05/12 14:56:15 bob Exp $
+" $Id: cvscommand.vim,v 1.65 2004/08/02 14:26:05 bob Exp $
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   $Date: 2004/05/12 14:56:15 $
-" Maintainer:    Bob Hiestand <bob@hiestandfamily.org>
+" Last Change:   $Date: 2004/08/02 14:26:05 $
+" Maintainer:    Bob Hiestand <robert.hiestand@mindspring.com>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements.
 "
@@ -222,9 +222,12 @@
 "                              result of a cvs command.  It is executed within
 "                              the context of the new buffer.
 "
+"   CVSBufferSetup             This event is fired just after CVS buffer setup
+"                              occurs, if enabled.
+"
 "   CVSPluginInit              This event is fired when the CVSCommand plugin
 "                              first loads.
-
+"
 "   CVSPluginFinish            This event is fired just after the CVSCommand
 "                              plugin loads.
 "
@@ -370,7 +373,8 @@ function! s:CVSCreateCommandBuffer(cmd, cmdName, statusText, origBuffNR)
     endwhile
   endif
 
-  let cvsOut = system(a:cmd)
+  let cvsCommand = s:CVSGetOption("CVSCommandCVSExec", "cvs") . " " . a:cmd
+  let cvsOut = system(cvsCommand)
   if strlen(cvsOut) == 0
     " Handle case of no output.  In this case, it is important to check the
     " file status, especially since cvs edit/unedit may change the attributes
@@ -499,7 +503,8 @@ function! s:CVSGetStatusVars(revisionVar, branchVar, repositoryVar)
   if !filereadable('CVS/Root')
     return ""
   endif
-  let statustext=system("cvs status " . escape(realFileName, ' *?\'))
+  let cvsCommand = s:CVSGetOption("CVSCommandCVSExec", "cvs") . " status " . escape(realFileName, ' *?\')
+  let statustext=system(cvsCommand)
   if(v:shell_error)
     execute 'cd' escape(oldCwd, ' ')
     return ""
@@ -574,6 +579,7 @@ function! s:CVSSetupBuffer()
   else
      unlet! b:CVSRepository
   endif
+  silent do CVSCommand User CVSBufferSetup
   let b:CVSBufferSetup=1
 endfunction
 
@@ -667,7 +673,7 @@ endfunction
 
 " Function: s:CVSAdd() {{{2
 function! s:CVSAdd()
-  return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('cvs add', 'cvsadd', ''))
+  return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('add', 'cvsadd', ''))
 endfunction
 
 " Function: s:CVSAnnotate(...) {{{2
@@ -714,7 +720,7 @@ function! s:CVSAnnotate(...)
     return -1
   endif
 
-  let resultBuffer=s:CVSCreateCommandBuffer('cvs -q annotate -r ' . revision . ' "' . realFileName . '"', 'cvsannotate', revision, cvsBufferCheck) 
+  let resultBuffer=s:CVSCreateCommandBuffer('-q annotate -r ' . revision . ' "' . realFileName . '"', 'cvsannotate', revision, cvsBufferCheck) 
   if resultBuffer !=  -1
     exec currentLine
     set filetype=CVSAnnotate
@@ -813,7 +819,7 @@ function! s:CVSDiff(...)
     let diffoptionstring=" -" . cvsdiffopt . " "
   endif
 
-  let resultBuffer = s:CVSDoCommand('cvs diff ' . diffoptionstring . revOptions , 'cvsdiff', caption)
+  let resultBuffer = s:CVSDoCommand('diff ' . diffoptionstring . revOptions , 'cvsdiff', caption)
   if resultBuffer != -1 
     set filetype=diff
   endif
@@ -822,12 +828,12 @@ endfunction
 
 " Function: s:CVSEdit() {{{2
 function! s:CVSEdit()
-  return s:CVSDoCommand('cvs edit', 'cvsedit', '')
+  return s:CVSDoCommand('edit', 'cvsedit', '')
 endfunction
 
 " Function: s:CVSEditors() {{{2
 function! s:CVSEditors()
-  return s:CVSDoCommand('cvs editors', 'cvseditors', '')
+  return s:CVSDoCommand('editors', 'cvseditors', '')
 endfunction
 
 " Function: s:CVSGotoOriginal(["!]) {{{2
@@ -857,7 +863,7 @@ function! s:CVSFinishCommit(messageFile, targetDir, targetFile, origBuffNR)
     if strlen(a:targetDir) > 0
       execute 'cd' escape(a:targetDir, ' ')
     endif
-    let resultBuffer=s:CVSCreateCommandBuffer('cvs commit -F "' . a:messageFile . '" "'. a:targetFile . '"', 'cvscommit', '', a:origBuffNR)
+    let resultBuffer=s:CVSCreateCommandBuffer('commit -F "' . a:messageFile . '" "'. a:targetFile . '"', 'cvscommit', '', a:origBuffNR)
     execute 'cd' escape(oldCwd, ' ')
     execute 'bw' escape(a:messageFile, ' *?\')
     silent execute 'call delete("' . a:messageFile . '")'
@@ -878,7 +884,7 @@ function! s:CVSLog(...)
     let caption = a:1
   endif
 
-  let resultBuffer=s:CVSDoCommand('cvs log' . versionOption, 'cvslog', caption)
+  let resultBuffer=s:CVSDoCommand('log' . versionOption, 'cvslog', caption)
   if resultBuffer != ""
     set filetype=rcslog
   endif
@@ -887,7 +893,7 @@ endfunction
 
 " Function: s:CVSRevert() {{{2
 function! s:CVSRevert()
-  return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('cvs update -C', 'cvsrevert', ''))
+  return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('update -C', 'cvsrevert', ''))
 endfunction
 
 " Function: s:CVSReview(...) {{{2
@@ -908,7 +914,7 @@ function! s:CVSReview(...)
     let versionOption=" -r " . versiontag . " "
   endif
 
-  let resultBuffer = s:CVSDoCommand('cvs -q update -p' . versionOption, 'cvsreview', versiontag)
+  let resultBuffer = s:CVSDoCommand('-q update -p' . versionOption, 'cvsreview', versiontag)
   if resultBuffer > 0
     let &filetype=getbufvar(b:CVSOrigBuffNR, '&filetype')
   endif
@@ -918,17 +924,17 @@ endfunction
 
 " Function: s:CVSStatus() {{{2
 function! s:CVSStatus()
-  return s:CVSDoCommand('cvs status', 'cvsstatus', '')
+  return s:CVSDoCommand('status', 'cvsstatus', '')
 endfunction
 
 " Function: s:CVSUnedit() {{{2
 function! s:CVSUnedit()
-  return s:CVSDoCommand('cvs unedit', 'cvsunedit', '')
+  return s:CVSDoCommand('unedit', 'cvsunedit', '')
 endfunction
 
 " Function: s:CVSUpdate() {{{2
 function! s:CVSUpdate()
-  return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('cvs update', 'update', ''))
+  return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('update', 'update', ''))
 endfunction
 
 " Function: s:CVSVimDiff(...) {{{2
@@ -1027,12 +1033,12 @@ function! s:CVSWatch(onoff)
     echoerr "Argument to CVSWatch must be one of [on|off|add|remove]"
     return -1
   end
-  return s:CVSDoCommand('cvs watch ' . tolower(a:onoff), 'cvswatch', '')
+  return s:CVSDoCommand('watch ' . tolower(a:onoff), 'cvswatch', '')
 endfunction
 
 " Function: s:CVSWatchers() {{{2
 function! s:CVSWatchers()
-  return s:CVSDoCommand('cvs watchers', 'cvswatchers', '')
+  return s:CVSDoCommand('watchers', 'cvswatchers', '')
 endfunction
 
 " Section: Command definitions {{{1

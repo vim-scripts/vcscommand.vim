@@ -1,9 +1,9 @@
 " vim600: set foldmethod=marker:
-" $Id: cvscommand.vim,v 1.63 2003/07/03 13:34:15 bob Exp $
+" $Id: cvscommand.vim,v 1.64 2004/05/12 14:56:15 bob Exp $
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   $Date: 2003/07/03 13:34:15 $
+" Last Change:   $Date: 2004/05/12 14:56:15 $
 " Maintainer:    Bob Hiestand <bob@hiestandfamily.org>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements.
@@ -995,6 +995,11 @@ function! s:CVSVimDiff(...)
           \ . "|call setbufvar(".originalBuffer.", \"&scrollbind\", ".getwinvar(originalWindow, '&scrollbind').")"
           \ . "|call setbufvar(".originalBuffer.", \"&wrap\", ".getwinvar(originalWindow, '&wrap').")"
 
+    if getwinvar(originalWindow, "&foldmethod") == 'manual'
+        let g:CVSCommandRestoreVimDiffStateCmd = g:CVSCommandRestoreVimDiffStateCmd
+            \ . "|normal zE"
+    endif
+
     diffthis
 
     let g:CVSCommandEditFileRunning = 1
@@ -1004,6 +1009,11 @@ function! s:CVSVimDiff(...)
       execute "silent vert rightbelow sbuffer" . resultBuffer
     endif
     unlet g:CVSCommandEditFileRunning
+
+    " Protect against VIM's splitting rules as they impact scrollbind
+    call setbufvar(originalBuffer, '&scrollbind', 1)
+    call setbufvar(resultBuffer, '&scrollbind', 1)
+
     call setbufvar(resultBuffer, '&bufhidden', savedHideOption)
   endif
 
@@ -1179,9 +1189,8 @@ function! s:CVSVimDiffRestore(vimDiffBuff)
 endfunction
 
 augroup CVSVimDiffRestore
-
   au!
-au BufUnload * call s:CVSVimDiffRestore(expand("<abuf>"))
+  au BufUnload * call s:CVSVimDiffRestore(expand("<abuf>"))
 augroup END
 
 " Section: Optional activation of buffer management {{{1

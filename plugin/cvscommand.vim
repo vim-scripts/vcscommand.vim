@@ -3,7 +3,7 @@
 " Vim plugin to assist in working with CVS-controlled files.
 "
 " Last Change:   2004/09/27
-" Version:       1.67
+" Version:       1.68
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits:       Mathieu Clabaut for many suggestions and improvements.
@@ -30,6 +30,9 @@
 "
 "                Domink Strasser for the patch to correct the status line for
 "                CVSAdd'd files.
+"
+"                Weerapong Sirikanya for finding a bug with CVSCommit and
+"                autochdir.
 "
 " Section: Documentation {{{1
 "
@@ -753,6 +756,12 @@ function! s:CVSCommit()
   let fileName=bufname(cvsBufferCheck)
   let realFilePath=s:CVSResolveLink(fileName)
   let newCwd=fnamemodify(realFilePath, ':h')
+  if strlen(newCwd) == 0
+    " Account for autochdir being in effect, which will make this blank, but
+    " we know we'll be in the current directory for the original file.
+    let newCwd = getcwd()
+  endif
+
   let realFileName=fnamemodify(realFilePath, ':t')
 
   if s:CVSEditFile(messageFileName, cvsBufferCheck) == -1

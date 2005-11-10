@@ -4,7 +4,7 @@ For instructions on installing this file, type
 	:help add-local-help
 inside Vim.
 
-Author:  Bob Hiestand <bob@hiestandfamily.org>
+Author:  Bob Hiestand <bob.hiestand@gmail.com>
 Credits:  Benji Fisher's excellent MatchIt documentation
 
 ==============================================================================
@@ -204,6 +204,14 @@ vimdiff.
 With either zero or one argument, the original buffer is used to perform the
 vimdiff.  When the other buffer is closed, the original buffer will be
 returned to normal mode.
+
+Once vimdiff mode is started using the above methods, additional vimdiff
+buffers may be added by passing a single version argument to the command.
+There may be up to 4 vimdiff buffers total.
+
+Using the 2-argument form of the command resets the vimdiff to only those 2
+versions.  Additionally, invoking the command on a different file will close
+the previous vimdiff buffers.
 
 :CVSWatch						*:CVSWatch*
 
@@ -550,8 +558,26 @@ on a file-by-file basis.  Alternatively, much the same can be done (less
 automatically) by the various project-oriented plugins out there.
 
 ==============================================================================
+9. Tips							*cvscommand-tips*
 
-7. Known bugs						*cvscommand-bugs*
+9.1 Split window annotation, by Michael Anderson
+
+:nmap <Leader>cN :vs<CR><C-w>h<Leader>cn:vertical res 40<CR>
+                 \ggdddd:set scb<CR>:set nowrap<CR><C-w>lgg:set scb<CR>
+                 \:set nowrap<CR>
+
+This splits the buffer vertically, puts an annotation on the left (minus the
+header) with the width set to 40. An editable/normal copy is placed on the
+right.  The two versions are scroll locked so they  move as one. and wrapping
+is turned off so that the lines line up correctly. The advantages are...
+
+1) You get a versioning on the right.
+2) You can still edit your own code.
+3) Your own code still has syntax highlighting.
+
+==============================================================================
+
+8. Known bugs						*cvscommand-bugs*
 
 Please let me know if you run across any.
 
@@ -560,5 +586,10 @@ to determine whether the changes should be thrown away.  Currently, that text
 shows up in the CVS result buffer as information; there is no way for the user
 to actually respond to the prompt and the CVS unedit command does nothing.  If
 this really bothers anyone, please let me know.
+
+CVSVimDiff, when using the original (real) source buffer as one of the diff
+buffers, uses some hacks to try to restore the state of the original buffer
+when the scratch buffer containing the other version is destroyed.  There may
+still be bugs in here, depending on many configuration details.
 
 vim:tw=78:ts=8:ft=help

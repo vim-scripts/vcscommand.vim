@@ -2,8 +2,8 @@
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   2005/11/10
-" Version:       1.70
+" Last Change:   2005/11/22
+" Version:       1.71
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits: {{{1
@@ -1121,6 +1121,17 @@ function! s:CVSVimDiff(...)
     endif
 
     let s:vimDiffSourceBuffer = originalBuffer
+
+    " Avoid executing the modeline in the current buffer after the autocommand.
+
+    let currentBuffer = bufnr('%')
+    let saveModeline = getbufvar(currentBuffer, '&modeline')
+    try
+      call setbufvar(currentBuffer, '&modeline', 0)
+      silent do CVSCommand User CVSVimDiffFinish
+    finally
+      call setbufvar(currentBuffer, '&modeline', saveModeline)
+    endtry
     return resultBuffer
   finally
     let s:CVSCommandEditFileRunning = s:CVSCommandEditFileRunning - 1

@@ -3,7 +3,7 @@
 " Vim plugin to assist in working with CVS-controlled files.
 "
 " Last Change:   2005/11/22
-" Version:       1.71
+" Version:       1.72
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits: {{{1
@@ -260,11 +260,6 @@
 "
 " Section: Plugin header {{{1
 
-if v:version < 602
-  echohl WarningMsg|echomsg "CVSCommand 1.69 or later requires VIM 6.2 or later"|echohl None
-  finish
-endif
-
 " loaded_cvscommand is set to 1 when the initialization begins, and 2 when it
 " completes.  This allows various actions to only be taken by functions after
 " system initialization.
@@ -273,6 +268,11 @@ if exists("loaded_cvscommand")
    finish
 endif
 let loaded_cvscommand = 1
+
+if v:version < 602
+  echohl WarningMsg|echomsg "CVSCommand 1.69 or later requires VIM 6.2 or later"|echohl None
+  finish
+endif
 
 " Section: Event group setup {{{1
 

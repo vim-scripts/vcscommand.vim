@@ -487,8 +487,6 @@ comfortable using certificate-based authentication, then only instructions
 6.1.1 and 6.1.2 (and optionally 6.1.4) need to be followed; ssh should then
 work transparently.
 
-Three things
-
 6.1 Environment settings				*cvscommand-ssh-env*
 
 6.1.1 CVSROOT should be set to something like:
@@ -556,6 +554,10 @@ events provided (such as CVSBufferCreated and CVSBufferSetup) can be used to
 set a buffer-local value (b:CVSCommandCVSExec) to override the CVS executable
 on a file-by-file basis.  Alternatively, much the same can be done (less
 automatically) by the various project-oriented plugins out there.
+
+It is highly recommended for ease-of-use that certificates with no passphrase
+or ssh-agent are employed so that the user is not given the password prompt
+too often.
 
 ==============================================================================
 9. Tips							*cvscommand-tips*

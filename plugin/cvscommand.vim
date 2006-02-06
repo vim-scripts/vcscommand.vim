@@ -2,8 +2,8 @@
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   2006/01/23
-" Version:       1.73
+" Last Change:   2006/02/06
+" Version:       1.74
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits: {{{1
@@ -43,12 +43,14 @@
 
 " Section: Documentation {{{1
 "
-" Provides functions to invoke various CVS commands on the current file.
-" The output of the commands is captured in a new scratch window.  For
-" convenience, if the functions are invoked on a CVS output window, the
-" original file is used for the cvs operation instead after the window is
-" split.  This is primarily useful when running CVSCommit and you need to see
-" the changes made, so that CVSDiff is usable and shows up in another window.
+" Provides functions to invoke various CVS commands on the current file
+" (either the current buffer, or, in the case of an directory buffer, the file
+" on the current line).  The output of the commands is captured in a new
+" scratch window.  For convenience, if the functions are invoked on a CVS
+" output window, the original file is used for the cvs operation instead after
+" the window is split.  This is primarily useful when running CVSCommit and
+" you need to see the changes made, so that CVSDiff is usable and shows up in
+" another window.
 "
 " Command documentation {{{2
 "
@@ -59,9 +61,12 @@
 "                  number to display.  If not given an argument, it uses the
 "                  most recent version of the file on the current branch.
 "                  Additionally, if the current buffer is a CVSAnnotate buffer
-"                  already, the version number just prior to the one on the
-"                  current line is used.  This allows one to navigate back to
-"                  examine the previous version of a line.
+"                  already, the version number on the current line is used.
+"
+"                  If the 'CVSCommandAnnotateParent' variable is set to a
+"                  non-zero value, the version previous to the one on the
+"                  current line is used instead.  This allows one to navigate
+"                  back to examine the previous version of a line.
 "
 " CVSCommit        This is a two-stage command.  The first step opens a buffer to
 "                  accept a log message.  When that buffer is written, it is
@@ -173,6 +178,12 @@
 "
 " Several variables are checked by the script to determine behavior as follow:
 "
+" CVSCommandAnnotateParent
+"   This variable, if set to a non-zero value, causes the zero-argument form
+"   of CVSAnnotate when invoked on a CVSAnnotate buffer to go to the version
+"   previous to that displayed on the current line.  If not set, it defaults
+"   to 0.
+"
 " CVSCommandCommitOnWrite
 "   This variable, if set to a non-zero value, causes the pending cvs commit
 "   to take place immediately as soon as the log message buffer is written.
@@ -235,7 +246,7 @@
 "   mapping to quit a CVS buffer:
 "
 "   augroup CVSCommand
-"     au CVSCommand User CVSBufferCreated silent! nmap <unique> <buffer> q:bwipeout<cr> 
+"     au CVSCommand User CVSBufferCreated silent! nmap <unique> <buffer> q :bwipeout<cr> 
 "   augroup END
 "
 "   The following hooks are available:
@@ -345,7 +356,6 @@ function! s:CVSEditFile(name, origBuffNR)
   "Name parameter will be pasted into expression.
   let name = escape(a:name, ' *?\')
 
-  let v:errmsg = ""
   let editCommand = s:CVSGetOption('CVSCommandEdit', 'edit')
   if editCommand != 'edit'
     if s:CVSGetOption('CVSCommandSplit', 'horizontal') == 'horizontal'
@@ -377,14 +387,6 @@ function! s:CVSEditFile(name, origBuffNR)
     let s:CVSCommandEditFileRunning = s:CVSCommandEditFileRunning - 1
   endtry
 
-  if v:errmsg != ""
-    if &modified && !&hidden
-      echoerr "Unable to open command buffer because 'nohidden' is set and the current buffer is modified (see :help 'hidden')."
-    else
-      echoerr "Unable to open command buffer" v:errmsg
-    endif
-    return -1
-  endif
   let b:CVSOrigBuffNR=a:origBuffNR
   let b:CVSCommandEdit='split'
 endfunction
@@ -525,12 +527,24 @@ function! s:CVSDoCommand(cmd, cmdName, statusText)
   endif
 
   let fileName=bufname(cvsBufferCheck)
+  if isdirectory(fileName)
+    let fileName=fileName . "/" . getline(".")
+  endif
   let realFileName = fnamemodify(s:CVSResolveLink(fileName), ':t')
   let oldCwd=s:CVSChangeToCurrentFileDir(fileName)
-  let fullCmd = a:cmd . ' "' . realFileName . '"'
-  let resultBuffer=s:CVSCreateCommandBuffer(fullCmd, a:cmdName, a:statusText, cvsBufferCheck)
-  execute 'cd' escape(oldCwd, ' ')
-  return resultBuffer
+  try
+    if !filereadable('CVS/Root')
+      throw fileName . ' is not a CVS-controlled file.'
+    endif
+    let fullCmd = a:cmd . ' "' . realFileName . '"'
+    let resultBuffer=s:CVSCreateCommandBuffer(fullCmd, a:cmdName, a:statusText, cvsBufferCheck)
+    return resultBuffer
+  catch
+    echoerr v:exception
+    return -1
+  finally
+    execute 'cd' escape(oldCwd, ' ')
+  endtry
 endfunction
 
 
@@ -758,24 +772,16 @@ endfunction
 
 " Function: s:CVSAnnotate(...) {{{2
 function! s:CVSAnnotate(...)
-  let cvsBufferCheck=s:CVSCurrentBufferCheck()
-  if cvsBufferCheck == -1 
-    echo "Original buffer no longer exists, aborting."
-    return -1
-  endif
-
-  let fileName=bufname(cvsBufferCheck)
-  let realFileName = fnamemodify(s:CVSResolveLink(fileName), ':t')
-  let oldCwd=s:CVSChangeToCurrentFileDir(fileName)
-
-  let currentLine=line(".")
-
   if a:0 == 0
-    " we already are in a CVS Annotate buffer
     if &filetype == "CVSAnnotate"
+      " This is a CVSAnnotate buffer.  Perform annotation of the version
+      " indicated by the current line.
       let revision = substitute(getline("."),'\(^[0-9.]*\).*','\1','')
-      let revmin = substitute(revision,'^[0-9.]*\.\([0-9]\+\)','\1','') + 0 -1 
+      let revmin = substitute(revision,'^[0-9.]*\.\([0-9]\+\)','\1','')
       let revmaj = substitute(revision,'^\([0-9.]*\)\.[0-9]\+','\1','')
+      if s:CVSGetOption('CVSCommandAnnotateParent', 0) != 0
+        let revmin = revmin - 1
+      endif
       if revmin == 0
         " Jump to ancestor branch
         let revision = substitute(revmaj,'^\([0-9.]*\)\.[0-9]\+','\1','')
@@ -785,8 +791,7 @@ function! s:CVSAnnotate(...)
     else
       let revision=CVSGetRevision()
       if revision == ""
-        echo "Unable to obtain status for " . fileName
-        execute 'cd' escape(oldCwd, ' ')
+        echoerr "Unable to obtain CVS version information."
         return -1
       endif
     endif
@@ -795,18 +800,17 @@ function! s:CVSAnnotate(...)
   endif
 
   if revision == "NEW"
-    echo "No annotatation available for new file " . fileName
-    execute 'cd' escape(oldCwd, ' ')
+    echo "No annotatation available for new file."
     return -1
   endif
 
-  let resultBuffer=s:CVSCreateCommandBuffer('-q annotate -r ' . revision . ' "' . realFileName . '"', 'cvsannotate', revision, cvsBufferCheck) 
+  let resultBuffer=s:CVSDoCommand('-q annotate -r ' . revision, 'cvsannotate', revision) 
   if resultBuffer !=  -1
-    exec currentLine
     set filetype=CVSAnnotate
+    " Remove header lines from standard error
+    silent v/^\d\+\%(\.\d\+\)\+/d
   endif
 
-  execute 'cd' escape(oldCwd, ' ')
   return resultBuffer
 endfunction
 
@@ -822,66 +826,69 @@ function! s:CVSCommit()
   " commands.
 
   let shellSlashBak = &shellslash
-  set shellslash
+  try
+    set shellslash
 
-  let messageFileName = tempname()
+    let messageFileName = tempname()
 
-  let fileName=bufname(cvsBufferCheck)
-  let realFilePath=s:CVSResolveLink(fileName)
-  let newCwd=fnamemodify(realFilePath, ':h')
-  if strlen(newCwd) == 0
-    " Account for autochdir being in effect, which will make this blank, but
-    " we know we'll be in the current directory for the original file.
-    let newCwd = getcwd()
-  endif
+    let fileName=bufname(cvsBufferCheck)
+    let realFilePath=s:CVSResolveLink(fileName)
+    let newCwd=fnamemodify(realFilePath, ':h')
+    if strlen(newCwd) == 0
+      " Account for autochdir being in effect, which will make this blank, but
+      " we know we'll be in the current directory for the original file.
+      let newCwd = getcwd()
+    endif
 
-  let realFileName=fnamemodify(realFilePath, ':t')
+    let realFileName=fnamemodify(realFilePath, ':t')
 
-  if s:CVSEditFile(messageFileName, cvsBufferCheck) == -1
+    if s:CVSEditFile(messageFileName, cvsBufferCheck) == -1
+      return
+    endif
+
+    " Protect against case and backslash issues in Windows.
+    let autoPattern = '\c' . messageFileName
+
+    " Ensure existance of group
+    augroup CVSCommit
+    augroup END
+
+    execute 'au CVSCommit BufDelete' autoPattern 'call delete("' . messageFileName . '")'
+    execute 'au CVSCommit BufDelete' autoPattern 'au! CVSCommit * ' autoPattern
+
+    " Create a commit mapping.  The mapping must clear all autocommands in case
+    " it is invoked when CVSCommandCommitOnWrite is active, as well as to not
+    " invoke the buffer deletion autocommand.
+
+    execute 'nnoremap <silent> <buffer> <Plug>CVSCommit '.
+          \ ':au! CVSCommit * ' . autoPattern . '<CR>'.
+          \ ':g/^CVS:/d<CR>'.
+          \ ':update<CR>'.
+          \ ':call <SID>CVSFinishCommit("' . messageFileName . '",' .
+          \                             '"' . newCwd . '",' .
+          \                             '"' . realFileName . '",' .
+          \                             cvsBufferCheck . ')<CR>'
+
+    silent 0put ='CVS: ----------------------------------------------------------------------'
+    silent put =\"CVS: Enter Log.  Lines beginning with `CVS:' are removed automatically\"
+    silent put ='CVS: Type <leader>cc (or your own <Plug>CVSCommit mapping)'
+
+    if s:CVSGetOption('CVSCommandCommitOnWrite', 1) == 1
+      execute 'au CVSCommit BufWritePre' autoPattern 'g/^CVS:/d'
+      execute 'au CVSCommit BufWritePost' autoPattern 'call s:CVSFinishCommit("' . messageFileName . '", "' . newCwd . '", "' . realFileName . '", ' . cvsBufferCheck . ') | au! * ' autoPattern
+      silent put ='CVS: or write this buffer'
+    endif
+
+    silent put ='CVS: to finish this commit operation'
+    silent put ='CVS: ----------------------------------------------------------------------'
+    $
+    let b:CVSSourceFile=fileName
+    let b:CVSCommand='CVSCommit'
+    set filetype=cvs
+  finally
     let &shellslash = shellSlashBak
-    return
-  endif
+  endtry
 
-  " Protect against case and backslash issues in Windows.
-  let autoPattern = '\c' . messageFileName
-
-  " Ensure existance of group
-  augroup CVSCommit
-  augroup END
-
-  execute 'au CVSCommit BufDelete' autoPattern 'call delete("' . messageFileName . '")'
-  execute 'au CVSCommit BufDelete' autoPattern 'au! CVSCommit * ' autoPattern
-
-  " Create a commit mapping.  The mapping must clear all autocommands in case
-  " it is invoked when CVSCommandCommitOnWrite is active, as well as to not
-  " invoke the buffer deletion autocommand.
-
-  execute 'nnoremap <silent> <buffer> <Plug>CVSCommit '.
-        \ ':au! CVSCommit * ' . autoPattern . '<CR>'.
-        \ ':g/^CVS:/d<CR>'.
-        \ ':update<CR>'.
-        \ ':call <SID>CVSFinishCommit("' . messageFileName . '",' .
-        \                             '"' . newCwd . '",' .
-        \                             '"' . realFileName . '",' .
-        \                             cvsBufferCheck . ')<CR>'
-
-  silent 0put ='CVS: ----------------------------------------------------------------------'
-  silent put =\"CVS: Enter Log.  Lines beginning with `CVS:' are removed automatically\"
-  silent put ='CVS: Type <leader>cc (or your own <Plug>CVSCommit mapping)'
-
-  if s:CVSGetOption('CVSCommandCommitOnWrite', 1) == 1
-    execute 'au CVSCommit BufWritePre' autoPattern 'g/^CVS:/d'
-    execute 'au CVSCommit BufWritePost' autoPattern 'call s:CVSFinishCommit("' . messageFileName . '", "' . newCwd . '", "' . realFileName . '", ' . cvsBufferCheck . ') | au! * ' autoPattern
-    silent put ='CVS: or write this buffer'
-  endif
-
-  silent put ='CVS: to finish this commit operation'
-  silent put ='CVS: ----------------------------------------------------------------------'
-  $
-  let b:CVSSourceFile=fileName
-  let b:CVSCommand='CVSCommit'
-  set filetype=cvs
-  let &shellslash = shellSlashBak
 endfunction
 
 " Function: s:CVSDiff(...) {{{2

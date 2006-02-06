@@ -48,6 +48,9 @@ commands).  The results of each operation are displayed in a scratch buffer.
 Several buffer variables are defined for those scratch buffers (please see
 |cvscommand-buffer-variables|).
 
+The notion of "current file" means either the current buffer, or, in the case
+of a directory buffer, the file on the current line within the buffer.
+
 For convenience, any CVSCommand invoked on a CVSCommand scratch buffer acts as
 though it was invoked on the original file and splits the screen so that the
 output appears in a new window.
@@ -101,12 +104,15 @@ not commit the newly-added file.
 
 :CVSAnnotate						*:CVSAnnotate*
 
-This command performs "cvs annotate" on the current file.
-If an argument is given, the argument is used as a revision number to display.
-If not given an argument, it uses the most recent version of the file on the
-current branch.  Additionally, if the current buffer is a CVSAnnotate buffer
-already, the version number just prior to the one on the current line is used.
-This allows one to navigate back to examine the previous version of a line.
+This command performs "cvs annotate" on the current file.  If an argument is
+given, the argument is used as a revision number to display.  If not given an
+argument, it uses the most recent version of the file on the current branch.
+Additionally, if the current buffer is a CVSAnnotate buffer already, the
+version number on the current line is used.
+
+If the |CVSCommandAnnotateParent| variable is set to a non-zero value, the
+version previous to the one on the current line is used instead.  This allows
+one to navigate back to examine the previous version of a line.
 
 The filetype of the CVSCommand scratch buffer is set to 'CVSAnnotate', to take
 advantage of the bundled syntax file.
@@ -118,6 +124,7 @@ This is a two-step command.  The first step opens a buffer to accept a log
 message.  When that buffer is written, it is automatically closed and the file
 is committed using the information from that log message.  The commit can be
 abandoned if the log message buffer is deleted or wiped before being written.
+
 Alternatively, the mapping that is used to invoke :CVSCommit (by default
 <Leader>cc) can be used in the log message buffer to immediately commit.  This
 is useful if the |CVSCommandCommitOnWrite| variable is set to 0 to disable the
@@ -312,6 +319,7 @@ level and are checked in that order of precedence.
 
 The following variables are available:
 
+|CVSCommandAnnotateParent|
 |CVSCommandCommitOnWrite|
 |CVSCommandCVSExec|
 |CVSCommandDeleteOnHide|
@@ -323,6 +331,12 @@ The following variables are available:
 |CVSCommandNameMarker|
 |CVSCommandNameResultBuffers|
 |CVSCommandSplit|
+
+CVSCommandAnnotateParent			*CVSCommandAnnotateParent*
+
+This variable, if set to a non-zero value, causes the zero-argument form of
+CVSAnnotate when invoked on a CVSAnnotate buffer to go to the version previous
+to that displayed on the current line.  If not set, it defaults to 0.
 
 CVSCommandCommitOnWrite				*CVSCommandCommitOnWrite*
 

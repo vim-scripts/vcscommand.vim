@@ -2,8 +2,8 @@
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   2006/02/06
-" Version:       1.74
+" Last Change:   2006/02/13
+" Version:       1.75
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits: {{{1
@@ -40,6 +40,9 @@
 "
 "                CJ van den Berg for the patch to not change working directory
 "                when editing a non-CVS file.
+"
+"                Luca Gerli for noticing bad behavior for keywords in files
+"                after commit if split windows are used.
 
 " Section: Documentation {{{1
 "
@@ -655,6 +658,7 @@ endfunction
 " Returns:  The CVS buffer number in a passthrough mode.
 
 function! s:CVSMarkOrigBufferForSetup(cvsBuffer)
+  checktime
   if a:cvsBuffer != -1
     let origBuffer = s:CVSBufferCheck(a:cvsBuffer)
     "This should never not work, but I'm paranoid

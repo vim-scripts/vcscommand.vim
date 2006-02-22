@@ -2,8 +2,8 @@
 "
 " Vim plugin to assist in working with CVS-controlled files.
 "
-" Last Change:   2006/02/13
-" Version:       1.75
+" Last Change:   2006/02/22
+" Version:       1.76
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 " Credits: {{{1
@@ -71,12 +71,17 @@
 "                  current line is used instead.  This allows one to navigate
 "                  back to examine the previous version of a line.
 "
-" CVSCommit        This is a two-stage command.  The first step opens a buffer to
-"                  accept a log message.  When that buffer is written, it is
-"                  automatically closed and the file is committed using the
-"                  information from that log message.  If the file should not be
-"                  committed, just destroy the log message buffer without writing
-"                  it.
+" CVSCommit[!]     If called with arguments, this performs "cvs commit" using
+"                  the arguments as the log message.
+"
+"                  If '!' is used, an empty log message is committed.
+"
+"                  If called with no arguments, this is a two-step command.
+"                  The first step opens a buffer to accept a log message.
+"                  When that buffer is written, it is automatically closed and
+"                  the file is committed using the information from that log
+"                  message.  The commit can be abandoned if the log message
+"                  buffer is deleted or wiped before being written.
 "
 " CVSDiff          With no arguments, this performs "cvs diff" on the current
 "                  file.  With one argument, "cvs diff" is performed on the
@@ -819,7 +824,14 @@ function! s:CVSAnnotate(...)
 endfunction
 
 " Function: s:CVSCommit() {{{2
-function! s:CVSCommit()
+function! s:CVSCommit(...)
+  " Handle the commit message being specified.  If a message is supplied, it
+  " is used; if bang is supplied, an empty message is used; otherwise, the
+  " user is provided a buffer from which to edit the commit message.
+  if a:2 != "" || a:1 == "!"
+    return s:CVSMarkOrigBufferForSetup(s:CVSDoCommand('commit -m "' . a:2 . '"', 'cvscommit', ''))
+  endif
+
   let cvsBufferCheck=s:CVSCurrentBufferCheck()
   if cvsBufferCheck ==  -1
     echo "Original buffer no longer exists, aborting."
@@ -1167,7 +1179,7 @@ endfunction
 " Section: Primary commands {{{2
 com! CVSAdd call s:CVSAdd()
 com! -nargs=? CVSAnnotate call s:CVSAnnotate(<f-args>)
-com! CVSCommit call s:CVSCommit()
+com! -bang -nargs=? CVSCommit call s:CVSCommit(<q-bang>, <q-args>)
 com! -nargs=* CVSDiff call s:CVSDiff(<f-args>)
 com! CVSEdit call s:CVSEdit()
 com! CVSEditors call s:CVSEditors()

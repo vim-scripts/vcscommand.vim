@@ -118,12 +118,18 @@ The filetype of the CVSCommand scratch buffer is set to 'CVSAnnotate', to take
 advantage of the bundled syntax file.
 
 
-:CVSCommit						*:CVSCommit*
+:CVSCommit[!]						*:CVSCommit*
 
-This is a two-step command.  The first step opens a buffer to accept a log
-message.  When that buffer is written, it is automatically closed and the file
-is committed using the information from that log message.  The commit can be
-abandoned if the log message buffer is deleted or wiped before being written.
+If called with arguments, this performs "cvs commit" using the arguments as
+the log message.
+
+If '!' is used with no arguments, an empty log message is committed.
+
+If called with no arguments, this is a two-step command.  The first step opens
+a buffer to accept a log message.  When that buffer is written, it is
+automatically closed and the file is committed using the information from that
+log message.  The commit can be abandoned if the log message buffer is deleted
+or wiped before being written.
 
 Alternatively, the mapping that is used to invoke :CVSCommit (by default
 <Leader>cc) can be used in the log message buffer to immediately commit.  This

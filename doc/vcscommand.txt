@@ -139,7 +139,7 @@ log message.  The commit can be abandoned if the log message buffer is deleted
 or wiped before being written.
 
 Alternatively, the mapping that is used to invoke :VCSCommit (by default
-<Leader>vc) can be used in the log message buffer to immediately commit.  This
+<Leader>cc) can be used in the log message buffer to immediately commit.  This
 is useful if the |VCSCommandCommitOnWrite| variable is set to 0 to disable the
 normal commit-on-write behavior.
 
@@ -279,17 +279,19 @@ This command performs "svn info" on the current file.
 By default, a mapping is defined for each command.  These mappings execute the
 default (no-argument) form of each command.
 
-<Leader>va VCSAdd
-<Leader>vn VCSAnnotate
-<Leader>vc VCSCommit
-<Leader>vd VCSDiff
-<Leader>vg VCSGotoOriginal
-<Leader>vG VCSGotoOriginal!
-<Leader>vl VCSLog
-<Leader>vr VCSReview
-<Leader>vs VCSStatus
-<Leader>vu VCSUpdate
-<Leader>vv VCSVimDiff
+<Leader>ca VCSAdd
+<Leader>cn VCSAnnotate
+<Leader>cc VCSCommit
+<Leader>cd VCSDiff
+<Leader>cg VCSGotoOriginal
+<Leader>cG VCSGotoOriginal!
+<Leader>cl VCSLog
+<Leader>cr VCSReview
+<Leader>cs VCSStatus
+<Leader>cu VCSUpdate
+<Leader>cv VCSVimDiff
+
+Only for CVS buffers:
 
 <Leader>ce CVSEdit
 <Leader>ci CVSEditors
@@ -300,7 +302,9 @@ default (no-argument) form of each command.
 <Leader>cwf CVSWatchOff
 <Leader>cwf CVSWatchRemove
 
-<Leader>si SVNInfo
+Only for SVN buffers:
+
+<Leader>ci SVNInfo
 
 						*vcscommand-mappings-override*
 
@@ -610,7 +614,7 @@ too often.
 
 9.1 Split window annotation, by Michael Anderson
 
-:nmap <Leader>vN :vs<CR><C-w>h<Leader>cn:vertical res 40<CR>
+:nmap <Leader>cN :vs<CR><C-w>h<Leader>cn:vertical res 40<CR>
                  \ggdddd:set scb<CR>:set nowrap<CR><C-w>lgg:set scb<CR>
                  \:set nowrap<CR>
 
@@ -622,6 +626,11 @@ is turned off so that the lines line up correctly. The advantages are...
 1) You get a versioning on the right.
 2) You can still edit your own code.
 3) Your own code still has syntax highlighting.
+
+Note, this only works if the 'VCSCommandEdit' option is set to 'edit'.
+Additionally, this is intended for use with unedited files, as otherwise the
+annotated copy from the repository will be out-of-sync with respect to the
+edited version.
 
 ==============================================================================
 

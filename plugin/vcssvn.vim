@@ -124,10 +124,10 @@ endfunction
 function! s:svnFunctions.Diff(argList)
   if len(a:argList) == 1
     let revOptions = ' -r' . a:argList[0]
-    let caption = a:argList[0] . ' -> current'
+    let caption = '(' . a:argList[0] . ' : current)'
   elseif len(a:argList) == 2
     let revOptions = ' -r' . a:argList[0] . ':' . a:argList[1]
-    let caption = a:argList[0] . ' -> ' . a:argList[1]
+    let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
   else
     let revOptions = ''
     let caption = ''
@@ -248,12 +248,16 @@ endfunction
 com! SVNInfo call s:SVNInfo()
 
 " Section: Plugin command mappings {{{1
-nnoremap <silent> <Plug>SVNInfo :SVNInfo<CR>
 
-" Section: Default mappings {{{1
-if !hasmapto('<Plug>SVNInfo')
-  nmap <unique> <Leader>si <Plug>SVNInfo
-endif
+let s:svnExtensionMappings = {}
+let mappingInfo = [['SVNInfo', 'SVNInfo', 'ci']]
+for [pluginName, commandText, shortCut] in mappingInfo
+  execute 'nnoremap <silent> <Plug>' . pluginName . ' :' . commandText . '<CR>'
+  if !hasmapto('<Plug>' . pluginName)
+    let s:svnExtensionMappings[shortCut] = commandText
+  endif
+endfor
+
 
 " Section: Menu items {{{1
 amenu <silent> &Plugin.VCS.SVN.&Info       <Plug>SVNInfo
@@ -262,9 +266,9 @@ amenu <silent> &Plugin.VCS.SVN.&Info       <Plug>SVNInfo
 " If the vcscommand.vim plugin hasn't loaded, delay registration until it
 " loads.
 if exists('g:loaded_VCSCommand')
-  call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions)
+  call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions, s:svnExtensionMappings)
 else
   augroup VCSCommand
-    au User VCSLoadExtensions call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions)
+    au User VCSLoadExtensions call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions, s:svnExtensionMappings)
   augroup END
 endif

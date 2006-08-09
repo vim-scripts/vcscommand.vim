@@ -161,10 +161,10 @@ endfunction
 function! s:cvsFunctions.Diff(argList)
   if len(a:argList) == 1
     let revOptions = '-r ' . a:argList[0]
-    let caption = a:argList[0] . ' -> current'
+    let caption = '(' . a:argList[0] . ' : current)'
   elseif len(a:argList) == 2
     let revOptions = '-r ' . a:argList[0] . ' -r ' . a:argList[1]
-    let caption = a:argList[0] . ' -> ' . a:argList[1]
+    let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
   else
     let revOptions = ''
     let caption = ''
@@ -212,7 +212,7 @@ function! s:cvsFunctions.GetBufferInfo()
     " We can still be in a CVS-controlled directory without this being a CVS
     " file
     if match(revision, '^New file!$') >= 0 
-      revision='New'
+      let revision='New'
     elseif match(revision, '^\d\+\.\d\+\%(\.\d\+\.\d\+\)*$') <0
       return ['Unknown']
     endif
@@ -319,40 +319,25 @@ com! CVSWatchRemove call s:CVSWatch('remove')
 com! CVSWatchers call s:CVSWatchers()
 
 " Section: Plugin command mappings {{{1
-nnoremap <silent> <Plug>CVSEdit :CVSEdit<CR>
-nnoremap <silent> <Plug>CVSEditors :CVSEditors<CR>
-nnoremap <silent> <Plug>CVSUnedit :CVSUnedit<CR>
-nnoremap <silent> <Plug>CVSWatchers :CVSWatchers<CR>
-nnoremap <silent> <Plug>CVSWatchAdd :CVSWatchAdd<CR>
-nnoremap <silent> <Plug>CVSWatchOn :CVSWatchOn<CR>
-nnoremap <silent> <Plug>CVSWatchOff :CVSWatchOff<CR>
-nnoremap <silent> <Plug>CVSWatchRemove :CVSWatchRemove<CR>
 
-" Section: Default mappings {{{1
-if !hasmapto('<Plug>CVSEdit')
-  nmap <unique> <Leader>ce <Plug>CVSEdit
-endif
-if !hasmapto('<Plug>CVSEditors')
-  nmap <unique> <Leader>ci <Plug>CVSEditors
-endif
-if !hasmapto('<Plug>CVSUnedit')
-  nmap <unique> <Leader>ct <Plug>CVSUnedit
-endif
-if !hasmapto('<Plug>CVSWatchers')
-  nmap <unique> <Leader>cwv <Plug>CVSWatchers
-endif
-if !hasmapto('<Plug>CVSWatchAdd')
-  nmap <unique> <Leader>cwa <Plug>CVSWatchAdd
-endif
-if !hasmapto('<Plug>CVSWatchOn')
-  nmap <unique> <Leader>cwn <Plug>CVSWatchOn
-endif
-if !hasmapto('<Plug>CVSWatchOff')
-  nmap <unique> <Leader>cwf <Plug>CVSWatchOff
-endif
-if !hasmapto('<Plug>CVSWatchRemove')
-  nmap <unique> <Leader>cwr <Plug>CVSWatchRemove
-endif
+let s:cvsExtensionMappings = {}
+let mappingInfo = [
+      \['CVSEdit', 'CVSEdit', 'ce'],
+      \['CVSEditors', 'CVSEditors', 'ci'],
+      \['CVSUnedit', 'CVSUnedit', 'ct'],
+      \['CVSWatchers', 'CVSWatchers', 'cwv'],
+      \['CVSWatchAdd', 'CVSWatch add', 'cwa'],
+      \['CVSWatchOff', 'CVSWatch off', 'cwf'],
+      \['CVSWatchOn', 'CVSWatch on', 'cwn'],
+      \['CVSWatchRemove', 'CVSWatch remove', 'cwr']
+      \]
+
+for [pluginName, commandText, shortCut] in mappingInfo
+  execute 'nnoremap <silent> <Plug>' . pluginName . ' :' . commandText . '<CR>'
+  if !hasmapto('<Plug>' . pluginName)
+    let s:cvsExtensionMappings[shortCut] = commandText
+  endif
+endfor
 
 " Section: Menu items {{{1
 silent! aunmenu Plugin.VCS.CVS
@@ -369,9 +354,9 @@ amenu <silent> &Plugin.VCS.CVS.WatchRemove <Plug>CVSWatchRemove
 " If the vcscommand.vim plugin hasn't loaded, delay registration until it
 " loads.
 if exists('g:loaded_VCSCommand')
-  call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions)
+  call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions, s:cvsExtensionMappings)
 else
   augroup VCSCommand
-    au User VCSLoadExtensions call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions)
+    au User VCSLoadExtensions call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions, s:cvsExtensionMappings)
   augroup END
 endif

@@ -118,24 +118,23 @@
 " By default, a mapping is defined for each command.  User-provided mappings
 " can be used instead by mapping to <Plug>CommandName, for instance:
 "
-" nmap ,va <Plug>VCSAdd
+" nmap ,ca <Plug>VCSAdd
 "
 " The default mappings are as follow:
 "
-"   <Leader>va VCSAdd
-"   <Leader>vn VCSAnnotate
-"   <Leader>vc VCSCommit
-"   <Leader>vd VCSDiff
-"   <Leader>vi VCSEditors
-"   <Leader>vg VCSGotoOriginal
-"   <Leader>vG VCSGotoOriginal!
-"   <Leader>vl VCSLog
-"   <Leader>vL VCSLock
-"   <Leader>vr VCSReview
-"   <Leader>vs VCSStatus
-"   <Leader>vu VCSUpdate
-"   <Leader>vU VCSUnlock
-"   <Leader>vv VCSVimDiff
+"   <Leader>ca VCSAdd
+"   <Leader>cn VCSAnnotate
+"   <Leader>cc VCSCommit
+"   <Leader>cd VCSDiff
+"   <Leader>cg VCSGotoOriginal
+"   <Leader>cG VCSGotoOriginal!
+"   <Leader>cl VCSLog
+"   <Leader>cL VCSLock
+"   <Leader>cr VCSReview
+"   <Leader>cs VCSStatus
+"   <Leader>cu VCSUpdate
+"   <Leader>cU VCSUnlock
+"   <Leader>cv VCSVimDiff
 "
 " Options documentation: {{{2
 "
@@ -248,6 +247,7 @@ silent do VCSCommand User VCSPluginInit
 
 let s:plugins = {}
 let s:pluginFiles = []
+let s:extendedMappings = {}
 let s:optionOverrides = {}
 let s:isEditFileRunning = 0
 
@@ -256,6 +256,22 @@ unlet! s:vimDiffSourceBuffer
 unlet! s:vimDiffScratchList
 
 " Section: Utility functions {{{1
+
+" Function: s:ExecuteExtensionMapping(mapping) {{{2
+" Invokes the appropriate extension mapping depending on the type of the
+" current buffer.
+
+function! s:ExecuteExtensionMapping(mapping)
+  let buffer = bufnr('%')
+  let vcsType = VCSCommandGetVCSType(buffer)
+  if !has_key(s:extendedMappings, vcsType)
+    throw 'Unknown VCS type:  ' . vcsType
+  endif
+  if !has_key(s:extendedMappings[vcsType], a:mapping)
+    throw 'This extended mapping is not defined for ' . vcsType
+  endif
+  silent execute 'normal' ':' .  s:extendedMappings[vcsType][a:mapping] . "\<CR>"
+endfunction
 
 " Function: s:ExecuteVCSCommand(command, buffer, argList) {{{2
 " Calls the indicated plugin-specific VCS command on the indicated buffer.
@@ -339,11 +355,11 @@ endfunction
 function! s:EditFile(command, originalBuffer, statusText)
   let fileName=bufname(a:originalBuffer)
   let vcsType = getbufvar(a:originalBuffer, 'VCSCommandVCSType')
-  let bufferName = '[' . vcsType . ' ' . a:command . ' ' . fileName
+  let bufferName = vcsType . ' ' . a:command
   if strlen(a:statusText) > 0
     let bufferName .= ' ' . a:statusText
   endif
-  let bufferName .= ']'
+  let bufferName .= ' ' . fileName
   let counter = 0
   let versionedBufferName = bufferName
   while buflisted(versionedBufferName)
@@ -788,9 +804,15 @@ endfunction
 " Function: VCSCommandRegisterModule(name, file, commandMap) {{{2
 " Allows VCS modules to register themselves.
 
-function! VCSCommandRegisterModule(name, file, commandMap)
+function! VCSCommandRegisterModule(name, file, commandMap, mappingMap)
   let s:plugins[a:name] = a:commandMap
   call add(s:pluginFiles, a:file)
+  let s:extendedMappings[a:name] = a:mappingMap
+  if(!empty(a:mappingMap))
+    for mapname in keys(a:mappingMap)
+      execute 'noremap <silent> <Leader>' . mapname ':call <SID>ExecuteExtensionMapping(''' . mapname . ''')<CR>'
+    endfor
+  endif
 endfunction
 
 " Function: VCSCommandDoCommand(cmd, cmdName, statusText) {{{2
@@ -945,46 +967,46 @@ nnoremap <silent> <Plug>VCSVimDiff :VCSVimDiff<CR>
 
 " Section: Default mappings {{{1
 if !hasmapto('<Plug>VCSAdd')
-  nmap <unique> <Leader>va <Plug>VCSAdd
+  nmap <unique> <Leader>ca <Plug>VCSAdd
 endif
 if !hasmapto('<Plug>VCSAnnotate')
-  nmap <unique> <Leader>vn <Plug>VCSAnnotate
+  nmap <unique> <Leader>cn <Plug>VCSAnnotate
 endif
 if !hasmapto('<Plug>VCSClearAndGotoOriginal')
-  nmap <unique> <Leader>vG <Plug>VCSClearAndGotoOriginal
+  nmap <unique> <Leader>cG <Plug>VCSClearAndGotoOriginal
 endif
 if !hasmapto('<Plug>VCSCommit')
-  nmap <unique> <Leader>vc <Plug>VCSCommit
+  nmap <unique> <Leader>cc <Plug>VCSCommit
 endif
 if !hasmapto('<Plug>VCSDiff')
-  nmap <unique> <Leader>vd <Plug>VCSDiff
+  nmap <unique> <Leader>cd <Plug>VCSDiff
 endif
 if !hasmapto('<Plug>VCSGotoOriginal')
-  nmap <unique> <Leader>vg <Plug>VCSGotoOriginal
+  nmap <unique> <Leader>cg <Plug>VCSGotoOriginal
 endif
 if !hasmapto('<Plug>VCSLock')
-  nmap <unique> <Leader>vL <Plug>VCSLock
+  nmap <unique> <Leader>cL <Plug>VCSLock
 endif
 if !hasmapto('<Plug>VCSLog')
-  nmap <unique> <Leader>vl <Plug>VCSLog
+  nmap <unique> <Leader>cl <Plug>VCSLog
 endif
 if !hasmapto('<Plug>VCSRevert')
-  nmap <unique> <Leader>vq <Plug>VCSRevert
+  nmap <unique> <Leader>cq <Plug>VCSRevert
 endif
 if !hasmapto('<Plug>VCSReview')
-  nmap <unique> <Leader>vr <Plug>VCSReview
+  nmap <unique> <Leader>cr <Plug>VCSReview
 endif
 if !hasmapto('<Plug>VCSStatus')
-  nmap <unique> <Leader>vs <Plug>VCSStatus
+  nmap <unique> <Leader>cs <Plug>VCSStatus
 endif
 if !hasmapto('<Plug>VCSUnlock')
-  nmap <unique> <Leader>vU <Plug>VCSUnlock
+  nmap <unique> <Leader>cU <Plug>VCSUnlock
 endif
 if !hasmapto('<Plug>VCSUpdate')
-  nmap <unique> <Leader>vu <Plug>VCSUpdate
+  nmap <unique> <Leader>cu <Plug>VCSUpdate
 endif
 if !hasmapto('<Plug>VCSVimDiff')
-  nmap <unique> <Leader>vv <Plug>VCSVimDiff
+  nmap <unique> <Leader>cv <Plug>VCSVimDiff
 endif
 
 " Section: Menu items {{{1

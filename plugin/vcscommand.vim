@@ -564,7 +564,7 @@ function! s:VCSCommit(bang, message)
 
   silent 0put ='VCS: ----------------------------------------------------------------------'
   silent put ='VCS: Please enter log message.  Lines beginning with ''VCS:'' are removed automatically.'
-  silent put ='VCS: To finish the commit, Type <leader>vc (or your own <Plug>VCSCommit mapping)'
+  silent put ='VCS: To finish the commit, Type <leader>cc (or your own <Plug>VCSCommit mapping)'
 
   if VCSCommandGetOption('VCSCommandCommitOnWrite', 1) == 1
     set buftype=acwrite

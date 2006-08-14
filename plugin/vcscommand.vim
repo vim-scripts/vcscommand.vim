@@ -11,8 +11,8 @@
 "
 " Provides functions to invoke various source control commands on the current
 " file (either the current buffer, or, in the case of an directory buffer, the
-" file on the current line).  The output of the commands is captured in a new
-" scratch window.
+" directory and all subdirectories associated with the current buffer).  The
+" output of the commands is captured in a new scratch window.
 "
 " This plugin needs additional extension plugins, each  specific to a source
 " control system, to function.  Those plugins should be placed in a
@@ -775,7 +775,7 @@ endfunction
 
 function! VCSCommandChangeToCurrentFileDir(fileName)
   let oldCwd=getcwd()
-  let newCwd=fnamemodify(resolve(a:fileName), ':h')
+  let newCwd=fnamemodify(resolve(a:fileName), ':p:h')
   if strlen(newCwd) > 0
     execute 'cd' escape(newCwd, ' ')
   endif
@@ -828,13 +828,14 @@ function! VCSCommandDoCommand(cmd, cmdName, statusText)
   let fileName=bufname(originalBuffer)
 
   " Work with netrw or other systems where a directory listing is displayed in
-  " a buffer.  In that case, use the file name on the current line.
+  " a buffer.
 
   if isdirectory(fileName)
-    let fileName=fileName . '/' . getline('.')
+    let realFileName = '.'
+  else
+    let realFileName = fnamemodify(resolve(fileName), ':t')
   endif
 
-  let realFileName = fnamemodify(resolve(fileName), ':t')
   let oldCwd=VCSCommandChangeToCurrentFileDir(fileName)
   try
     let fullCmd = a:cmd . ' "' . realFileName . '"'

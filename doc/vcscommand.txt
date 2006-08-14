@@ -52,7 +52,8 @@ Several buffer variables are defined for those scratch buffers (please see
 |vcscommand-buffer-variables|).
 
 The notion of "current file" means either the current buffer, or, in the case
-of a directory buffer, the file on the current line within the buffer.
+of a directory buffer (such as Explorer or netrw buffers), the directory (and
+all subdirectories) represented by the the buffer.
 
 For convenience, any vcscommand invoked on a vcscommand scratch buffer acts as
 though it was invoked on the original file and splits the screen so that the

@@ -349,10 +349,10 @@ set on the original file itself.
 5. Configuration and customization			*vcscommand-customize*
 							*vcscommand-config*
 
-The vcscommand plugin can be configured in two ways:  by setting configuration
-variables (see |vcscommand-options|) or by defining vcscommand event handlers
-(see |vcscommand-events|).  Additionally, the vcscommand plugin supports a
-customized status line (see |vcscommand-statusline| and
+The vcscommand plugin can be configured in several ways:  by setting
+configuration variables (see |vcscommand-options|) or by defining vcscommand
+event handlers (see |vcscommand-events|).  Additionally, the vcscommand plugin
+supports a customized status line (see |vcscommand-statusline| and
 |vcscommand-buffer-management|).
 
 5.1 vcscommand configuration variables			*vcscommand-options*
@@ -371,6 +371,8 @@ The following variables are available:
 |VCSCommandDiffSplit|
 |VCSCommandEdit|
 |VCSCommandEnableBufferSetup|
+|VCSCommandResultBufferNameExtension|
+|VCSCommandResultBufferNameFunction|
 |VCSCommandSplit|
 |VCSCommandSVNExec|
 
@@ -413,6 +415,28 @@ mode see (|vcscommand-buffer-management|).  This mode means that the
 'VCSCommandBufferInfo' variable is filled with version information if the file
 is VCS-controlled.  This is useful for displaying version information in the
 status bar.
+
+VCSCommandResultBufferNameExtension	*VCSCommandResultBufferNameExtension*
+
+This variable, if set to a non-blank value, is appended to the name of the VCS
+command output buffers.  For example, '.vcs'.  Using this option may help
+avoid problems caused by autocommands dependent on file extension.
+
+VCSCommandResultBufferNameFunction	*VCSCommandResultBufferNameFunction*
+
+This variable, if set, specifies a custom function for naming VCS command
+output buffers.  This function is expected to return the new buffer name, and
+will be passed the following arguments:
+
+  command - name of the VCS command being executed (such as 'Log' or
+  'Diff').
+  
+  originalBuffer - buffer number of the source file.
+  
+  vcsType - type of VCS controlling this file (such as 'CVS' or 'SVN').
+  
+  statusText - extra text associated with the VCS action (such as version
+  numbers).
 
 VCSCommandSplit					*VCSCommandSplit*
 

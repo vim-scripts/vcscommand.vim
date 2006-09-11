@@ -3,7 +3,7 @@
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
 " Last Change:
-" Version:       VCS development
+" Version:       Beta 9
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 "
@@ -169,6 +169,25 @@
 "   the file is VCS-controlled.  This is useful for displaying version
 "   information in the status bar.  Additional options may be set by
 "   individual VCS plugins.
+"
+" VCSCommandResultBufferNameExtension
+"   This variable, if set to a non-blank value, is appended to the name of the
+"   VCS command output buffers.  For example, '.vcs'.  Using this option may
+"   help avoid problems caused by autocommands dependent on file extension.
+"
+" VCSCommandResultBufferNameFunction
+"   This variable, if set, specifies a custom function for naming VCS command
+"   output buffers.  This function will be passed the following arguments:
+"
+"   command - name of the VCS command being executed (such as 'Log' or
+"   'Diff').
+"
+"   originalBuffer - buffer number of the source file.
+"
+"   vcsType - type of VCS controlling this file (such as 'CVS' or 'SVN').
+"
+"   statusText - extra text associated with the VCS action (such as version
+"   numbers).
 "
 " VCSCommandSplit
 "   This variable controls the orientation of the various window splits that
@@ -348,14 +367,13 @@ function! s:CreateCommandBuffer(cmd, cmdName, originalBuffer, statusText)
   return bufnr('%')
 endfunction
 
-" Function: s:EditFile(command, originalBuffer, statusText) {{{2
-" Creates a new buffer of the given name and associates it with the given
-" original buffer.
+" Function: s:GenerateResultBufferName(command, originalBuffer, vcsType, statusText) {{{2
+" Default method of generating the name for VCS result buffers.  This can be
+" overridden with the VCSResultBufferNameFunction variable.
 
-function! s:EditFile(command, originalBuffer, statusText)
+function! s:GenerateResultBufferName(command, originalBuffer, vcsType, statusText)
   let fileName=bufname(a:originalBuffer)
-  let vcsType = getbufvar(a:originalBuffer, 'VCSCommandVCSType')
-  let bufferName = vcsType . ' ' . a:command
+  let bufferName = a:vcsType . ' ' . a:command
   if strlen(a:statusText) > 0
     let bufferName .= ' ' . a:statusText
   endif
@@ -366,6 +384,44 @@ function! s:EditFile(command, originalBuffer, statusText)
     let counter += 1
     let versionedBufferName = bufferName . ' (' . counter . ')'
   endwhile
+  return versionedBufferName
+endfunction
+
+" Function: s:GenerateResultBufferNameWithExtension(command, originalBuffer, vcsType, statusText) {{{2
+" Method of generating the name for VCS result buffers that uses the original
+" file name with the VCS type and command appended as extensions.
+
+function! s:GenerateResultBufferNameWithExtension(command, originalBuffer, vcsType, statusText)
+  let fileName=bufname(a:originalBuffer)
+  let bufferName = a:vcsType . ' ' . a:command
+  if strlen(a:statusText) > 0
+    let bufferName .= ' ' . a:statusText
+  endif
+  let bufferName .= ' ' . fileName . VCSCommandGetOption('VCSCommandResultBufferNameExtension', '.vcs')
+  let counter = 0
+  let versionedBufferName = bufferName
+  while buflisted(versionedBufferName)
+    let counter += 1
+    let versionedBufferName = '(' . counter . ') ' . bufferName
+  endwhile
+  return versionedBufferName
+endfunction
+
+" Function: s:EditFile(command, originalBuffer, statusText) {{{2
+" Creates a new buffer of the given name and associates it with the given
+" original buffer.
+
+function! s:EditFile(command, originalBuffer, statusText)
+  let vcsType = getbufvar(a:originalBuffer, 'VCSCommandVCSType')
+
+  let nameExtension = VCSCommandGetOption('VCSCommandResultBufferNameExtension', '')
+  if nameExtension == ''
+    let nameFunction = VCSCommandGetOption('VCSCommandResultBufferNameFunction', 's:GenerateResultBufferName')
+  else
+    let nameFunction = VCSCommandGetOption('VCSCommandResultBufferNameFunction', 's:GenerateResultBufferNameWithExtension')
+  endif
+
+  let resultBufferName = call(nameFunction, [a:command, a:originalBuffer, vcsType, a:statusText])
 
   " Protect against useless buffer set-up
   let s:isEditFileRunning += 1
@@ -378,14 +434,15 @@ function! s:EditFile(command, originalBuffer, statusText)
         vert rightbelow split
       endif
     endif
-    edit `=versionedBufferName`
+    edit `=resultBufferName`
     let b:VCSCommandCommand = a:command
     let b:VCSCommandOriginalBuffer = a:originalBuffer
-    let b:VCSCommandSourceFile = fileName
+    let b:VCSCommandSourceFile = bufname(a:originalBuffer)
     let b:VCSCommandVCSType = vcsType
+
     set buftype=nofile
     set noswapfile
-    set filetype=
+    let &filetype=vcsType . a:command
 
     if a:statusText != ''
       let b:VCSCommandStatusText = a:statusText
@@ -477,6 +534,11 @@ function! s:WipeoutCommandBuffers(originalBuffer, VCSCommand)
     let buffer = buffer + 1
   endwhile
 endfunction
+
+" Function: s:VimDiffRestore(vimDiffBuff) {{{2
+" Checks whether the given buffer is one whose deletion should trigger
+" restoration of an original buffer after it was diffed.  If so, it executes
+" the appropriate setting command stored with that original buffer.
 
 function! s:VimDiffRestore(vimDiffBuff)
   let s:isEditFileRunning += 1

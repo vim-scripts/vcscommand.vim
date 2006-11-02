@@ -31,6 +31,10 @@
 " VCSCommandSVNExec
 "   This variable specifies the SVN executable.  If not set, it defaults to
 "   'svn' executed from the user's executable path.
+"
+" VCSCommandSVNDiffOpt
+"   This variable, if set, determines the options passed to the svn diff
+"   command (such as 'u', 'w', or 'b').
 
 if v:version < 700
   finish
@@ -133,7 +137,15 @@ function! s:svnFunctions.Diff(argList)
     let caption = ''
   endif
 
-  let resultBuffer = s:DoCommand('diff' . revOptions , 'diff', caption)
+  let svndiffopt = VCSCommandGetOption('VCSCommandSVNDiffOpt', '')
+
+  if svndiffopt == ''
+    let diffoptionstring = ''
+  else
+    let diffoptionstring = ' -x -' . svndiffopt . ' '
+  endif
+
+  let resultBuffer = s:DoCommand('diff' . diffoptionstring . revOptions , 'diff', caption)
   if resultBuffer > 0
     set filetype=diff
   else

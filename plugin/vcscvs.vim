@@ -170,12 +170,12 @@ function! s:cvsFunctions.Diff(argList)
     let caption = ''
   endif
 
-  let cvsdiffopt=VCSCommandGetOption('VCSCommandCVSDiffOpt', 'u')
+  let cvsdiffopt = VCSCommandGetOption('VCSCommandCVSDiffOpt', 'u')
 
   if cvsdiffopt == ''
-    let diffoptionstring=''
+    let diffoptionstring = ''
   else
-    let diffoptionstring=' -' . cvsdiffopt . ' '
+    let diffoptionstring = ' -' . cvsdiffopt . ' '
   endif
 
   let resultBuffer = s:DoCommand('diff ' . diffoptionstring . revOptions , 'diff', caption)

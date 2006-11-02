@@ -159,6 +159,9 @@ For CVS, this command uses the |VCSCommandCVSDiffOpt| variable to specify diff
 options.  If that variable does not exist, a plugin-specific default is used.
 If you wish to have no options, then set it to the empty string.
 
+For SVN, this command uses the |VCSCommandSVNDiffOpt| variable to specify diff
+options.  If that variable does not exist, the SVN default is used.
+
 :VCSGotoOriginal					*:VCSGotoOriginal*
 
 This command jumps to the source buffer if the current buffer is a VCS scratch
@@ -374,6 +377,7 @@ The following variables are available:
 |VCSCommandResultBufferNameExtension|
 |VCSCommandResultBufferNameFunction|
 |VCSCommandSplit|
+|VCSCommandSVNDiffOpt|
 |VCSCommandSVNExec|
 
 VCSCommandCommitOnWrite				*VCSCommandCommitOnWrite*
@@ -393,7 +397,7 @@ VCSCommandDeleteOnHide				*VCSCommandDeleteOnHide*
 This variable, if set to a non-zero value, causes the temporary result buffers
 to automatically delete themselves when hidden.
 
-VCSCommandCVSDiffOpt				*VCSCommandDiffOpt*
+VCSCommandCVSDiffOpt				*VCSCommandCVSDiffOpt*
 
 This variable, if set, determines the options passed to the diff command of
 CVS.  If not set, it defaults to 'u'.
@@ -447,6 +451,11 @@ If set to 'horizontal', the resulting windows will be on stacked on top of
 one another.  If set to 'vertical', the resulting windows will be
 side-by-side.  If not set, it defaults to 'horizontal' for all but
 VCSVimDiff windows.
+
+VCSCommandSVNDiffOpt				*VCSCommandSVNDiffOpt*
+
+This variable, if set, determines the options passed with the '-x' parameter
+to the SVN diff command.  If not set, no options are passed.
 
 VCSCommandSVNExec				*VCSCommandSVNExec*
 

@@ -3,7 +3,7 @@
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
 " Last Change:
-" Version:       Beta 9
+" Version:       Beta 10
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:       This file is placed in the public domain.
 "
@@ -617,7 +617,7 @@ function! s:VCSCommit(bang, message)
     return s:VCSFinishCommit([a:message], originalBuffer)
   endif
 
-  call s:EditFile('commit log', originalBuffer, '')
+  call s:EditFile('commitlog', originalBuffer, '')
   set ft=vcscommit
 
   " Create a commit mapping.

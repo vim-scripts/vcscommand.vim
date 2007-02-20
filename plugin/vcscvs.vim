@@ -2,10 +2,28 @@
 "
 " CVS extension for VCSCommand.
 "
-" Last Change:
 " Version:       VCS development
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
-" License:       This file is placed in the public domain.
+" License:
+" Copyright (c) 2007 Bob Hiestand
+"
+" Permission is hereby granted, free of charge, to any person obtaining a copy
+" of this software and associated documentation files (the "Software"), to
+" deal in the Software without restriction, including without limitation the
+" rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+" sell copies of the Software, and to permit persons to whom the Software is
+" furnished to do so, subject to the following conditions:
+"
+" The above copyright notice and this permission notice shall be included in
+" all copies or substantial portions of the Software.
+"
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+" AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+" FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+" IN THE SOFTWARE.
 "
 " Section: Documentation {{{1
 "
@@ -109,9 +127,9 @@ function! s:cvsFunctions.Identify(buffer)
   endif
 endfunction
 
-" Function: s:cvsFunctions.Add() {{{2
+" Function: s:cvsFunctions.Add(argList) {{{2
 function! s:cvsFunctions.Add(argList)
-  return s:DoCommand('add', 'add', '')
+  return s:DoCommand(join(['add'] + a:argList, ' '), 'add', join(a:argList, ' '))
 endfunction
 
 " Function: s:cvsFunctions.Annotate(argList) {{{2
@@ -155,6 +173,11 @@ function! s:cvsFunctions.Commit(argList)
     echomsg 'No commit needed.'
   endif
   return resultBuffer
+endfunction
+
+" Function: s:cvsFunctions.Delete() {{{2
+function! s:cvsFunctions.Delete(argList)
+  return s:DoCommand(join(['remove -f'] + a:argList, ' '), 'delete', join(a:argList, ' '))
 endfunction
 
 " Function: s:cvsFunctions.Diff(argList) {{{2
@@ -231,9 +254,13 @@ function! s:cvsFunctions.Log(argList)
   if len(a:argList) == 0
     let versionOption = ''
     let caption = ''
-  else
-    let versionOption=' -r' . a:argList[0]
+  elseif len(a:argList) == 1 && a:argList[0] !~ '^-'
+    let versionOption =' -r' . a:argList[0]
     let caption = a:argList[0]
+  else
+    " Multiple options, or the option starts with '-'
+    let caption = join(a:argList, ' ')
+    let versionOption = ' ' . caption
   endif
 
   let resultBuffer=s:DoCommand('log' . versionOption, 'log', caption)
@@ -267,7 +294,7 @@ endfunction
 
 " Function: s:cvsFunctions.Status(argList) {{{2
 function! s:cvsFunctions.Status(argList)
-  return s:DoCommand('status', 'status', '')
+  return s:DoCommand(join(['status'] + a:argList, ' '), 'status', join(a:argList, ' '))
 endfunction
 
 " Function: s:cvsFunctions.Update(argList) {{{2

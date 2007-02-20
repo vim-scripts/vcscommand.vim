@@ -2,10 +2,28 @@
 "
 " SVN extension for VCSCommand.
 "
-" Last Change:
 " Version:       VCS development
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
-" License:       This file is placed in the public domain.
+" License:
+" Copyright (c) 2007 Bob Hiestand
+"
+" Permission is hereby granted, free of charge, to any person obtaining a copy
+" of this software and associated documentation files (the "Software"), to
+" deal in the Software without restriction, including without limitation the
+" rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+" sell copies of the Software, and to permit persons to whom the Software is
+" furnished to do so, subject to the following conditions:
+"
+" The above copyright notice and this permission notice shall be included in
+" all copies or substantial portions of the Software.
+"
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+" AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+" FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+" IN THE SOFTWARE.
 "
 " Section: Documentation {{{1
 "
@@ -31,6 +49,9 @@
 " VCSCommandSVNExec
 "   This variable specifies the SVN executable.  If not set, it defaults to
 "   'svn' executed from the user's executable path.
+"
+" VCSCommandSVNDiffExt
+"   This variable, if set, sets the external diff program used by Subversion.
 "
 " VCSCommandSVNDiffOpt
 "   This variable, if set, determines the options passed to the svn diff
@@ -86,7 +107,7 @@ endfunction
 
 " Function: s:svnFunctions.Add() {{{2
 function! s:svnFunctions.Add(argList)
-  return s:DoCommand('add', 'add', '')
+  return s:DoCommand(join(['add'] + a:argList, ' '), 'add', join(a:argList, ' '))
 endfunction
 
 " Function: s:svnFunctions.Annotate(argList) {{{2
@@ -124,6 +145,11 @@ function! s:svnFunctions.Commit(argList)
   endif
 endfunction
 
+" Function: s:svnFunctions.Delete() {{{2
+function! s:svnFunctions.Delete(argList)
+  return s:DoCommand(join(['delete'] + a:argList, ' '), 'delete', join(a:argList, ' '))
+endfunction
+
 " Function: s:svnFunctions.Diff(argList) {{{2
 function! s:svnFunctions.Diff(argList)
   if len(a:argList) == 1
@@ -137,6 +163,13 @@ function! s:svnFunctions.Diff(argList)
     let caption = ''
   endif
 
+  let svndiffext = VCSCommandGetOption('VCSCommandSVNDiffExt', '')
+  if svndiffext == ''
+    let diffextstring = ''
+  else
+    let diffextstring = ' --diff-cmd ' . svndiffext . ' '
+  endif
+
   let svndiffopt = VCSCommandGetOption('VCSCommandSVNDiffOpt', '')
 
   if svndiffopt == ''
@@ -145,11 +178,13 @@ function! s:svnFunctions.Diff(argList)
     let diffoptionstring = ' -x -' . svndiffopt . ' '
   endif
 
-  let resultBuffer = s:DoCommand('diff' . diffoptionstring . revOptions , 'diff', caption)
+  let resultBuffer = s:DoCommand('diff' . diffextstring . diffoptionstring . revOptions , 'diff', caption)
   if resultBuffer > 0
     set filetype=diff
   else
-    echomsg 'No differences found'
+    if svndiffext == ''
+      echomsg 'No differences found'
+    endif
   endif
   return resultBuffer
 endfunction
@@ -195,7 +230,7 @@ endfunction
 
 " Function: s:svnFunctions.Lock(argList) {{{2
 function! s:svnFunctions.Lock(argList)
-  return s:DoCommand('lock', 'lock', '')
+  return s:DoCommand(join(['lock'] + a:argList, ' '), 'lock', join(a:argList, ' '))
 endfunction
 
 " Function: s:svnFunctions.Log() {{{2
@@ -203,9 +238,13 @@ function! s:svnFunctions.Log(argList)
   if len(a:argList) == 0
     let versionOption = ''
     let caption = ''
-  else
+  elseif len(a:argList) == 1 && a:argList[0] !~ "^-"
     let versionOption=' -r' . a:argList[0]
     let caption = a:argList[0]
+  else
+    " Multiple options, or the option starts with '-'
+    let caption = join(a:argList, ' ')
+    let versionOption = ' ' . caption
   endif
 
   let resultBuffer=s:DoCommand('log -v' . versionOption, 'log', caption)
@@ -236,12 +275,15 @@ endfunction
 
 " Function: s:svnFunctions.Status(argList) {{{2
 function! s:svnFunctions.Status(argList)
-  return s:DoCommand('status -u -v', 'status', '')
+  if len(a:argList) == 0
+    let a:argList = ['-u', '-v']
+  endif
+  return s:DoCommand(join(['status -u -v'] + a:argList, ' '), 'status', join(a:argList, ' '))
 endfunction
 
 " Function: s:svnFunctions.Unlock(argList) {{{2
 function! s:svnFunctions.Unlock(argList)
-  return s:DoCommand('unlock', 'unlock', '')
+  return s:DoCommand(join(['unlock'] + a:argList, ' '), 'unlock', join(a:argList, ' '))
 endfunction
 " Function: s:svnFunctions.Update(argList) {{{2
 function! s:svnFunctions.Update(argList)
@@ -251,13 +293,13 @@ endfunction
 " Section: SVN-specific functions {{{1
 
 " Function: s:SVNInfo() {{{2
-function! s:SVNInfo()
-  return s:DoCommand('info', 'svninfo', '')
+function! s:SVNInfo(argList)
+  return s:DoCommand(join(['info'] + a:argList, ' '), 'svninfo', join(a:argList, ' '))
 endfunction
 
 " Section: Command definitions {{{1
 " Section: Primary commands {{{2
-com! SVNInfo call s:SVNInfo()
+com! -nargs=* SVNInfo call s:SVNInfo([<f-args>])
 
 " Section: Plugin command mappings {{{1
 
@@ -269,7 +311,6 @@ for [pluginName, commandText, shortCut] in mappingInfo
     let s:svnExtensionMappings[shortCut] = commandText
   endif
 endfor
-
 
 " Section: Menu items {{{1
 amenu <silent> &Plugin.VCS.SVN.&Info       <Plug>SVNInfo

@@ -40,11 +40,11 @@ Credits:  Benji Fisher's excellent MatchIt documentation
 
 2. vcscommand Installation				*vcscommand-install*
 
-The vcscommand plugin comprises four files, vcscommand.vim, vcssvn.vim,
-vcscvs.vim and vcscommand.txt (this file).  In order to install the plugin,
-place the vcscommand.vim, vcssvn.vim, and vcscvs.vim files into a plugin
-directory in your runtime path (please see |add-global-plugin| and
-|'runtimepath'|. 
+The vcscommand plugin comprises five files: vcscommand.vim, vcssvn.vim,
+vcscvs.vim, vcssvk.vim and vcscommand.txt (this file).  In order to install
+the plugin, place the vcscommand.vim, vcssvn.vim, vcssvk.vim, and vcscvs.vim
+files into a plugin directory in your runtime path (please see
+|add-global-plugin| and |'runtimepath'|. 
 
 This help file can be included in the VIM help system by copying it into a
 'doc' directory in your runtime path and then executing the |:helptags|
@@ -122,10 +122,6 @@ The following commands are specific to CVS files:
 |:CVSWatchRemove|
 |:CVSWatchers|
 
-The following commands are specific to SVN files:
-
-|:SVNInfo|
-
 :VCSAdd							*:VCSAdd*
 
 This command adds the current file to source control.  Please note, this does
@@ -141,9 +137,9 @@ it uses the most recent version of the file (on the current branch, if under
 CVS control).  Additionally, if the current buffer is a VCSAnnotate buffer
 already, the version number on the current line is used.
 
-The filetype of the vcscommand scratch buffer is set to either 'CVSAnnotate'
-or 'SVNAnnotate' as appropriate, to take advantage of the bundled syntax
-files.
+The filetype of the vcscommand scratch buffer is set to one of 'CVSAnnotate',
+'SVNAnnotate', or 'SVKAnnotate' as appropriate, to take advantage of the
+bundled syntax files.
 
 :VCSCommit[!]						*:VCSCommit*
 
@@ -198,6 +194,11 @@ buffer.
 
 Like ":VCSGotoOriginal" but also executes :bufwipeout on all VCS scrach
 buffers associated with the original file.
+
+:VCSInfo						*:VCSInfo*
+
+This command displays extended information about the current file in a new
+scratch buffer. 
 
 :VCSLock						*:VCSLock*
 
@@ -303,11 +304,6 @@ This command is an alias for ":CVSWatch remove"
 
 This command performs "cvs watchers" on the current file.
 
-:SVNInfo						*:SVNInfo*
-
-This command performs "svn info" on the current file.  All parameters are
-passed directly to svn.
-
 4.2 Mappings						*vcscommand-mappings*
 
 By default, a mapping is defined for each command.  These mappings execute the
@@ -319,6 +315,7 @@ default (no-argument) form of each command.
 <Leader>cd VCSDiff
 <Leader>cg VCSGotoOriginal
 <Leader>cG VCSGotoOriginal!
+<Leader>ci VCSInfo
 <Leader>cl VCSLog
 <Leader>cr VCSReview
 <Leader>cs VCSStatus
@@ -328,17 +325,13 @@ default (no-argument) form of each command.
 Only for CVS buffers:
 
 <Leader>ce CVSEdit
-<Leader>ci CVSEditors
+<Leader>cE CVSEditors
 <Leader>ct CVSUnedit
 <Leader>cwv CVSWatchers
 <Leader>cwa CVSWatchAdd
 <Leader>cwn CVSWatchOn
 <Leader>cwf CVSWatchOff
 <Leader>cwf CVSWatchRemove
-
-Only for SVN buffers:
-
-<Leader>ci SVNInfo
 
 						*vcscommand-mappings-override*
 
@@ -407,6 +400,7 @@ The following variables are available:
 |VCSCommandResultBufferNameExtension|
 |VCSCommandResultBufferNameFunction|
 |VCSCommandSplit|
+|VCSCommandSVKExec|
 |VCSCommandSVNDiffExt|
 |VCSCommandSVNDiffOpt|
 |VCSCommandSVNExec|
@@ -482,6 +476,11 @@ If set to 'horizontal', the resulting windows will be on stacked on top of
 one another.  If set to 'vertical', the resulting windows will be
 side-by-side.  If not set, it defaults to 'horizontal' for all but
 VCSVimDiff windows.
+
+VCSCommandSVKExec				*VCSCommandSVKExec*
+
+This variable controls the executable used for all SVK commands  If not set,
+it defaults to "svk".
 
 VCSCommandSVNDiffExt				*VCSCommandSVNDiffExt*
 

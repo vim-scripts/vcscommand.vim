@@ -61,7 +61,7 @@
 " The default mappings are as follow:
 "
 "   <Leader>ce CVSEdit
-"   <Leader>ci CVSEditors
+"   <Leader>cE CVSEditors
 "   <Leader>ct CVSUnedit
 "   <Leader>cwv CVSWatchers
 "   <Leader>cwa CVSWatchAdd
@@ -83,6 +83,12 @@ if v:version < 700
   finish
 endif
 
+call system(VCSCommandGetOption('VCSCommandCVSExec', 'cvs') . ' --version')
+if v:shell_error
+  " CVS is not installed
+  finish
+endif
+
 " Section: Variable initialization {{{1
 
 let s:cvsFunctions = {}
@@ -93,16 +99,12 @@ let s:cvsFunctions = {}
 " Wrapper to VCSCommandDoCommand to add the name of the CVS executable to the
 " command argument.
 function! s:DoCommand(cmd, cmdName, statusText)
-  try
-    if VCSCommandGetVCSType(expand('%')) == 'CVS'
-      let fullCmd = VCSCommandGetOption('VCSCommandCVSExec', 'cvs') . ' ' . a:cmd
-      return VCSCommandDoCommand(fullCmd, a:cmdName, a:statusText)
-    else
-      throw 'No suitable plugin'
-    endif
-  catch /No suitable plugin/
-    echohl WarningMsg|echomsg 'Cannot apply CVS commands to this file.'|echohl None
-  endtry
+  if VCSCommandGetVCSType(expand('%')) == 'CVS'
+    let fullCmd = VCSCommandGetOption('VCSCommandCVSExec', 'cvs') . ' ' . a:cmd
+    return VCSCommandDoCommand(fullCmd, a:cmdName, a:statusText)
+  else
+    throw 'CVS VCSCommand plugin called on non-CVS item.'
+  endif
 endfunction
 
 " Section: VCS function implementations {{{1
@@ -111,12 +113,12 @@ endfunction
 function! s:cvsFunctions.Identify(buffer)
   let fileName = resolve(bufname(a:buffer))
   if isdirectory(fileName)
-    let directory = fileName
+    let directoryName = fileName
   else
-    let directory = fnamemodify(fileName, ':h')
+    let directoryName = fnamemodify(fileName, ':h')
   endif
-  if strlen(directory) > 0
-    let CVSRoot = directory . '/CVS/Root'
+  if strlen(directoryName) > 0
+    let CVSRoot = directoryName . '/CVS/Root'
   else
     let CVSRoot = 'CVS/Root'
   endif
@@ -138,26 +140,21 @@ function! s:cvsFunctions.Annotate(argList)
     if &filetype == 'CVSAnnotate'
       " This is a CVSAnnotate buffer.  Perform annotation of the version
       " indicated by the current line.
-      let revision = matchstr(getline('.'),'\v%(^[0-9.]+)')
+      let caption = matchstr(getline('.'),'\v%(^[0-9.]+)')
+      let options = ' -r' . caption
     else
-      let revision=VCSCommandGetRevision()
-      if revision == ''
-        throw 'Unable to obtain version information.'
-      elseif revision == 'Unknown'
-        throw 'File not under source control'
-      elseif revision == 'New'
-        throw 'No annotatation available for new file.'
-      endif
+      let caption = ''
+      let options = ''
     endif
+  elseif len(a:argList) == 1 && a:argList[0] !~ '^-'
+    let caption = a:argList[0]
+    let options = ' -r' . caption
   else
-    let revision=a:argList[0]
+    let caption = join(a:argList, ' ')
+    let options = ' ' . caption
   endif
 
-  if revision == 'New'
-    throw 'No annotatation available for new file.'
-  endif
-
-  let resultBuffer=s:DoCommand('-q annotate -r ' . revision, 'annotate', revision) 
+  let resultBuffer = s:DoCommand('-q annotate' . options, 'annotate', caption) 
   if resultBuffer > 0
     set filetype=CVSAnnotate
     " Remove header lines from standard error
@@ -176,8 +173,16 @@ function! s:cvsFunctions.Commit(argList)
 endfunction
 
 " Function: s:cvsFunctions.Delete() {{{2
+" By default, use the -f option to remove the file first.  If options are
+" passed in, use those instead.
 function! s:cvsFunctions.Delete(argList)
-  return s:DoCommand(join(['remove -f'] + a:argList, ' '), 'delete', join(a:argList, ' '))
+  let options = ['-f']
+  let caption = ''
+  if len(a:argList) > 0
+    let options = a:argList
+    let caption = join(a:argList, ' ')
+  endif
+  return s:DoCommand(join(['remove'] + options, ' '), 'delete', caption)
 endfunction
 
 " Function: s:cvsFunctions.Diff(argList) {{{2
@@ -193,15 +198,15 @@ function! s:cvsFunctions.Diff(argList)
     let caption = ''
   endif
 
-  let cvsdiffopt = VCSCommandGetOption('VCSCommandCVSDiffOpt', 'u')
+  let cvsDiffOpt = VCSCommandGetOption('VCSCommandCVSDiffOpt', 'u')
 
-  if cvsdiffopt == ''
-    let diffoptionstring = ''
+  if cvsDiffOpt == ''
+    let diffOptionString = ''
   else
-    let diffoptionstring = ' -' . cvsdiffopt . ' '
+    let diffOptionString = ' -' . cvsDiffOpt . ' '
   endif
 
-  let resultBuffer = s:DoCommand('diff ' . diffoptionstring . revOptions , 'diff', caption)
+  let resultBuffer = s:DoCommand('diff ' . diffOptionString . revOptions , 'diff', caption)
   if resultBuffer > 0
     set filetype=diff
   else
@@ -224,7 +229,7 @@ function! s:cvsFunctions.GetBufferInfo()
   if !filereadable(fileName)
     return ['Unknown']
   endif
-  let oldCwd=VCSCommandChangeToCurrentFileDir(fileName)
+  let oldCwd = VCSCommandChangeToCurrentFileDir(fileName)
   try
     let statusText=system(VCSCommandGetOption('VCSCommandCVSExec', 'cvs') . ' status "' . realFileName . '"')
     if(v:shell_error)
@@ -350,7 +355,7 @@ com! CVSWatchers call s:CVSWatchers()
 let s:cvsExtensionMappings = {}
 let mappingInfo = [
       \['CVSEdit', 'CVSEdit', 'ce'],
-      \['CVSEditors', 'CVSEditors', 'ci'],
+      \['CVSEditors', 'CVSEditors', 'cE'],
       \['CVSUnedit', 'CVSUnedit', 'ct'],
       \['CVSWatchers', 'CVSWatchers', 'cwv'],
       \['CVSWatchAdd', 'CVSWatch add', 'cwa'],

@@ -37,7 +37,6 @@ syn region cvsHead 	start="^\d\+\.\d\+" end="):" 	contains=cvsVer,cvsName,cvsDat
 
 if !exists("did_cvsannotate_syntax_inits")
 let did_cvsannotate_syntax_inits = 1
-hi link cvsText 	String
 hi link cvsDate 	Comment
 hi link cvsName	Type
 hi link cvsVer	Statement

@@ -1,5 +1,7 @@
 vim600: set foldmethod=marker:tw=78:formatoptions=aw2tq
 
+This file documents major changes from the cvscommand.vim plugin.
+
 1.  Require Vim 7 in order to leverage several convenient features; also
 because I wanted to play with Vim 7.
 

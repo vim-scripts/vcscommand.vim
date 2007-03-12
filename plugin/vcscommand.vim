@@ -2,7 +2,7 @@
 "
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
-" Version:       Beta 12
+" Version:       Beta 13
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2007 Bob Hiestand
@@ -1060,13 +1060,13 @@ com! -nargs=* VCSDelete call s:ExecuteVCSCommand('Delete', [<f-args>], 1)
 com! -nargs=* VCSDiff call s:ExecuteVCSCommand('Diff', [<f-args>], 1)
 com! -nargs=0 -bang VCSGotoOriginal call s:VCSGotoOriginal(<q-bang>)
 com! -nargs=* VCSInfo call s:ExecuteVCSCommand('Info', [<f-args>], 1)
-com! -nargs=* VCSLock call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Lock', [<f-args>]), 1)
+com! -nargs=* VCSLock call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Lock', [<f-args>], 1))
 com! -nargs=* VCSLog call s:ExecuteVCSCommand('Log', [<f-args>], 1)
-com! -nargs=0 VCSRevert call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Revert', []), 1)
+com! -nargs=0 VCSRevert call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Revert', [], 1))
 com! -nargs=? VCSReview call s:ExecuteVCSCommand('Review', [<f-args>], 1)
 com! -nargs=* VCSStatus call s:ExecuteVCSCommand('Status', [<f-args>], 1)
-com! -nargs=* VCSUnlock call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Unlock', [<f-args>]), 1)
-com! -nargs=0 VCSUpdate call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Update', []), 1)
+com! -nargs=* VCSUnlock call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Unlock', [<f-args>], 1))
+com! -nargs=0 VCSUpdate call s:MarkOrigBufferForSetup(s:ExecuteVCSCommand('Update', [], 1))
 com! -nargs=* VCSVimDiff call s:VCSVimDiff(<f-args>)
 
 " Section: VCS buffer management commands {{{2

@@ -140,21 +140,35 @@ function! s:cvsFunctions.Annotate(argList)
     if &filetype == 'CVSAnnotate'
       " This is a CVSAnnotate buffer.  Perform annotation of the version
       " indicated by the current line.
-      let caption = matchstr(getline('.'),'\v%(^[0-9.]+)')
-      let options = ' -r' . caption
+      let caption = matchstr(getline('.'),'\v^[0-9.]+')
+
+      if VCSCommandGetOption('VCSCommandCVSAnnotateParent', 0) != 0
+        if caption != '1.1'
+          let revmaj = matchstr(caption,'\v[0-9.]+\ze\.[0-9]+')
+          let revmin = matchstr(caption,'\v[0-9.]+\.\zs[0-9]+') - 1
+          if revmin == 0
+            " Jump to ancestor branch
+            let caption = matchstr(revmaj,'\v[0-9.]+\ze\.[0-9]+')
+          else
+            let caption = revmaj . "." .  revmin
+          endif
+        endif
+      endif
+
+      let options = ['-r' . caption]
     else
       let caption = ''
-      let options = ''
+      let options = ['']
     endif
   elseif len(a:argList) == 1 && a:argList[0] !~ '^-'
     let caption = a:argList[0]
-    let options = ' -r' . caption
+    let options = ['-r' . caption]
   else
-    let caption = join(a:argList, ' ')
-    let options = ' ' . caption
+    let caption = join(a:argList)
+    let options = a:argList
   endif
 
-  let resultBuffer = s:DoCommand('-q annotate' . options, 'annotate', caption) 
+  let resultBuffer = s:DoCommand(join(['-q', 'annotate'] + options), 'annotate', caption) 
   if resultBuffer > 0
     set filetype=CVSAnnotate
     " Remove header lines from standard error

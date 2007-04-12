@@ -137,6 +137,11 @@ it uses the most recent version of the file (on the current branch, if under
 CVS control).  Additionally, if the current buffer is a VCSAnnotate buffer
 already, the version number on the current line is used.
 
+For CVS buffers, the 'VCSCommandCVSAnnotateParent' option, if set to non-zero,
+will cause the above behavior to change.  Instead of annotating the version on
+the current line, the parent revision is used instead, crossing branches if
+necessary.
+
 The filetype of the vcscommand scratch buffer is set to one of 'CVSAnnotate',
 'SVNAnnotate', or 'SVKAnnotate' as appropriate, to take advantage of the
 bundled syntax files.

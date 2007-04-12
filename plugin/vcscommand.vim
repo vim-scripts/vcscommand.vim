@@ -2,7 +2,7 @@
 "
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
-" Version:       Beta 13
+" Version:       Beta 14
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2007 Bob Hiestand
@@ -1169,6 +1169,31 @@ augroup END
 if VCSCommandGetOption('VCSCommandEnableBufferSetup', 0)
   call VCSCommandEnableBufferSetup()
 endif
+
+" Section: VIM shutdown hook {{{1
+
+" Close all result buffers when VIM exits, to prevent them from being restored
+" via viminfo.
+
+" Function: s:CloseAllResultBuffers() {{{2
+" Closes all vcscommand result buffers.
+function! s:CloseAllResultBuffers()
+  " This avoids using bufdo as that may load buffers already loaded in another
+  " vim process, resulting in an error.
+  let buffnr = 1
+  let buffmaxnr = bufnr('$')
+  while buffnr <= buffmaxnr
+    if getbufvar(buffnr, 'VCSCommandOriginalBuffer') != "" 
+      execute 'bw' buffnr
+    endif
+    let buffnr = buffnr + 1
+  endwhile
+endfunction
+
+augroup VCSCommandVIMShutdown
+  au!
+  au VimLeavePre * call s:CloseAllResultBuffers()
+augroup END
 
 " Section: Plugin completion {{{1
 

@@ -44,6 +44,8 @@ if v:version < 700
   finish
 endif
 
+runtime plugin/vcscommand.vim
+
 call system(VCSCommandGetOption('VCSCommandSVNExec', 'svn') . ' --version')
 if v:shell_error
   " SVN is not installed
@@ -136,33 +138,39 @@ endfunction
 
 " Function: s:svnFunctions.Diff(argList) {{{2
 function! s:svnFunctions.Diff(argList)
-  if len(a:argList) == 1
-    let revOptions = ' -r' . a:argList[0]
-    let caption = '(' . a:argList[0] . ' : current)'
-  elseif len(a:argList) == 2
-    let revOptions = ' -r' . a:argList[0] . ':' . a:argList[1]
-    let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
-  else
-    let revOptions = ''
+  if len(a:argList) == 0
+    let revOptions = [] 
     let caption = ''
+  elseif len(a:argList) <= 2 && a:argList[0] !~ '^-'
+    if len(a:argList) == 1
+      let revOptions = ['-r' . a:argList[0]]
+      let caption = '(' . a:argList[0] . ' : current)'
+    elseif len(a:argList) == 2
+      let revOptions = ['-r' . a:argList[0] . ':' . a:argList[1]]
+      let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
+    endif
+  else
+    " Pass-through
+    let caption = join(a:argList, ' ')
+    let revOptions = a:argList
   endif
 
   let svnDiffExt = VCSCommandGetOption('VCSCommandSVNDiffExt', '')
   if svnDiffExt == ''
-    let diffExtString = ''
+    let diffExt = []
   else
-    let diffExtString = ' --diff-cmd ' . svnDiffExt . ' '
+    let diffExt = ['--diff-cmd ' . svnDiffExt]
   endif
 
-  let svnDiffOpt = VCSCommandGetOption('VCSCommandsvnDiffOpt', '')
+  let svnDiffOpt = VCSCommandGetOption('VCSCommandSVNDiffOpt', '')
 
   if svnDiffOpt == ''
-    let diffOptionString = ''
+    let diffOptions = []
   else
-    let diffOptionString = ' -x -' . svnDiffOpt . ' '
+    let diffOptions = ['-x -' . svnDiffOpt]
   endif
 
-  let resultBuffer = s:DoCommand('diff' . diffExtString . diffOptionString . revOptions , 'diff', caption)
+  let resultBuffer = s:DoCommand(join(['diff'] + diffExt + diffOptions + revOptions), 'diff', caption)
   if resultBuffer > 0
     set filetype=diff
   else
@@ -182,31 +190,25 @@ endfunction
 function! s:svnFunctions.GetBufferInfo()
   let originalBuffer = VCSCommandGetOriginalBuffer(bufnr('%'))
   let fileName = bufname(originalBuffer)
-  let realFileName = fnamemodify(resolve(fileName), ':t')
-  let oldCwd = VCSCommandChangeToCurrentFileDir(fileName)
-  try
-    let statusText = system(VCSCommandGetOption('VCSCommandSVNExec', 'svn') . ' status -vu "' . realFileName . '"')
-    if(v:shell_error)
-      return []
-    endif
+  let statusText = system(VCSCommandGetOption('VCSCommandSVNExec', 'svn') . ' status -vu "' . fileName . '"')
+  if(v:shell_error)
+    return []
+  endif
 
-    " File not under SVN control.
-    if statusText =~ '^?'
-      return ['Unknown']
-    endif
+  " File not under SVN control.
+  if statusText =~ '^?'
+    return ['Unknown']
+  endif
 
-    let [flags, revision, repository] = matchlist(statusText, '^\(.\{8}\)\s\+\(\S\+\)\s\+\(\S\+\)\s\+\(\S\+\)\s')[1:3]
-    if revision == ''
-      " Error
-      return ['Unknown']
-    elseif flags =~ '^A'
-      return ['New', 'New']
-    else
-      return [revision, repository]
-    endif
-  finally
-    execute 'cd' escape(oldCwd, ' ')
-  endtry
+  let [flags, revision, repository] = matchlist(statusText, '^\(.\{8}\)\s\+\(\S\+\)\s\+\(\S\+\)\s\+\(\S\+\)\s')[1:3]
+  if revision == ''
+    " Error
+    return ['Unknown']
+  elseif flags =~ '^A'
+    return ['New', 'New']
+  else
+    return [revision, repository]
+  endif
 endfunction
 
 " Function: s:svnFunctions.Info(argList) {{{2
@@ -278,12 +280,4 @@ function! s:svnFunctions.Update(argList)
 endfunction
 
 " Section: Plugin Registration {{{1
-" If the vcscommand.vim plugin hasn't loaded, delay registration until it
-" loads.
-if exists('g:loaded_VCSCommand')
-  call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions, [])
-else
-  augroup VCSCommand
-    au User VCSLoadExtensions call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions, [])
-  augroup END
-endif
+call VCSCommandRegisterModule('SVN', expand('<sfile>'), s:svnFunctions, [])

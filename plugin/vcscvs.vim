@@ -83,6 +83,8 @@ if v:version < 700
   finish
 endif
 
+runtime plugin/vcscommand.vim
+
 call system(VCSCommandGetOption('VCSCommandCVSExec', 'cvs') . ' --version')
 if v:shell_error
   " CVS is not installed
@@ -201,26 +203,31 @@ endfunction
 
 " Function: s:cvsFunctions.Diff(argList) {{{2
 function! s:cvsFunctions.Diff(argList)
-  if len(a:argList) == 1
-    let revOptions = '-r ' . a:argList[0]
-    let caption = '(' . a:argList[0] . ' : current)'
-  elseif len(a:argList) == 2
-    let revOptions = '-r ' . a:argList[0] . ' -r ' . a:argList[1]
-    let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
-  else
-    let revOptions = ''
+  if len(a:argList) == 0
+    let revOptions = []
     let caption = ''
+  elseif len(a:argList) <= 2 && a:argList[0] !~ '^-'
+    if len(a:argList) == 1
+      let revOptions = ['-r ' . a:argList[0]]
+      let caption = '(' . a:argList[0] . ' : current)'
+    elseif len(a:argList) == 2
+      let revOptions = ['-r ' . a:argList[0] . ' -r ' . a:argList[1]]
+      let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
+    endif
+  else
+    " Pass-through
+    let caption = join(a:argList, ' ')
+    let revOptions = a:argList
   endif
 
   let cvsDiffOpt = VCSCommandGetOption('VCSCommandCVSDiffOpt', 'u')
-
   if cvsDiffOpt == ''
-    let diffOptionString = ''
+    let diffOptions = []
   else
-    let diffOptionString = ' -' . cvsDiffOpt . ' '
+    let diffOptions = ['-' . cvsDiffOpt]
   endif
 
-  let resultBuffer = s:DoCommand('diff ' . diffOptionString . revOptions , 'diff', caption)
+  let resultBuffer = s:DoCommand(join(['diff'] + diffOptions + revOptions), 'diff', caption)
   if resultBuffer > 0
     set filetype=diff
   else
@@ -239,6 +246,16 @@ endfunction
 function! s:cvsFunctions.GetBufferInfo()
   let originalBuffer = VCSCommandGetOriginalBuffer(bufnr('%'))
   let fileName = bufname(originalBuffer)
+  if isdirectory(fileName)
+    let tag = ''
+    if filereadable(fileName . '/CVS/Tag')
+      let tagFile = readfile(fileName . '/CVS/Tag')
+      if len(tagFile) == 1
+        let tag = substitute(tagFile[0], '^T', '', '')
+      endif
+    endif
+    return [tag]
+  endif
   let realFileName = fnamemodify(resolve(fileName), ':t')
   if !filereadable(fileName)
     return ['Unknown']
@@ -264,7 +281,7 @@ function! s:cvsFunctions.GetBufferInfo()
     let repository=substitute(repository, '^New file!\|No revision control file$', 'New', '')
     return [revision, repository, branch]
   finally
-    execute 'cd' escape(oldCwd, ' ')
+    call VCSCommandChdir(oldCwd)
   endtry
 endfunction
 
@@ -397,12 +414,4 @@ amenu <silent> &Plugin.VCS.CVS.WatchOff    <Plug>CVSWatchOff
 amenu <silent> &Plugin.VCS.CVS.WatchRemove <Plug>CVSWatchRemove
 
 " Section: Plugin Registration {{{1
-" If the vcscommand.vim plugin hasn't loaded, delay registration until it
-" loads.
-if exists('g:loaded_VCSCommand')
-  call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions, s:cvsExtensionMappings)
-else
-  augroup VCSCommand
-    au User VCSLoadExtensions call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions, s:cvsExtensionMappings)
-  augroup END
-endif
+call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions, s:cvsExtensionMappings)

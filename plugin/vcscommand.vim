@@ -2,7 +2,7 @@
 "
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
-" Version:       Beta 15
+" Version:       Beta 16
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2007 Bob Hiestand

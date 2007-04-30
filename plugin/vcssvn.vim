@@ -141,14 +141,9 @@ function! s:svnFunctions.Diff(argList)
   if len(a:argList) == 0
     let revOptions = [] 
     let caption = ''
-  elseif len(a:argList) <= 2 && a:argList[0] !~ '^-'
-    if len(a:argList) == 1
-      let revOptions = ['-r' . a:argList[0]]
-      let caption = '(' . a:argList[0] . ' : current)'
-    elseif len(a:argList) == 2
-      let revOptions = ['-r' . a:argList[0] . ':' . a:argList[1]]
-      let caption = '(' . a:argList[0] . ' : ' . a:argList[1] . ')'
-    endif
+  elseif len(a:argList) <= 2 && match(a:argList, '^-') == -1
+    let revOptions = ['-r' . join(a:argList, ':')]
+    let caption = '(' . a:argList[0] . ' : ' . get(a:argList, 1, 'current') . ')'
   else
     " Pass-through
     let caption = join(a:argList, ' ')
@@ -224,18 +219,18 @@ endfunction
 " Function: s:svnFunctions.Log(argList) {{{2
 function! s:svnFunctions.Log(argList)
   if len(a:argList) == 0
-    let versionOption = ''
+    let options = []
     let caption = ''
-  elseif len(a:argList) == 1 && a:argList[0] !~ "^-"
-    let versionOption = ' -r' . a:argList[0]
-    let caption = a:argList[0]
+  elseif len(a:argList) <= 2 && match(a:argList, '^-') == -1
+    let options = ['-r' . join(a:argList, ':')]
+    let caption = options[0]
   else
-    " Multiple options, or the option starts with '-'
+    " Pass-through
+    let options = a:argList
     let caption = join(a:argList, ' ')
-    let versionOption = ' ' . caption
   endif
 
-  let resultBuffer = s:DoCommand('log -v' . versionOption, 'log', caption)
+  let resultBuffer = s:DoCommand(join(['log', '-v'] + options), 'log', caption)
   return resultBuffer
 endfunction
 

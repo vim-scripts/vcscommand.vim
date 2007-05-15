@@ -2,7 +2,7 @@
 "
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
-" Version:       Beta 17
+" Version:       Beta 18
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2007 Bob Hiestand
@@ -182,6 +182,14 @@
 " VCSCommandDiffSplit
 "   This variable overrides the VCSCommandSplit variable, but only for buffers
 "   created with VCSVimDiff.
+"
+" VCSCommandDisableMappings
+"   This variable, if set to a non-zero value, prevents the default command
+"   mappings from being set.
+"
+" VCSCommandDisableExtensionMappings
+"   This variable, if set to a non-zero value, prevents the default command
+"   mappings from being set for commands specific to an individual VCS.
 "
 " VCSCommandEdit
 "   This variable controls whether to split the current window to display a
@@ -891,7 +899,9 @@ function! VCSCommandRegisterModule(name, file, commandMap, mappingMap)
   let s:plugins[a:name] = a:commandMap
   call add(s:pluginFiles, a:file)
   let s:extendedMappings[a:name] = a:mappingMap
-  if(!empty(a:mappingMap))
+  if !empty(a:mappingMap)
+        \ && !VCSCommandGetOption('VCSCommandDisableMappings', 0)
+        \ && !VCSCommandGetOption('VCSCommandDisableExtensionMappings', 0)
     for mapname in keys(a:mappingMap)
       execute 'noremap <silent> <Leader>' . mapname ':call <SID>ExecuteExtensionMapping(''' . mapname . ''')<CR>'
     endfor
@@ -1100,53 +1110,56 @@ nnoremap <silent> <Plug>VCSUpdate :VCSUpdate<CR>
 nnoremap <silent> <Plug>VCSVimDiff :VCSVimDiff<CR>
 
 " Section: Default mappings {{{1
-if !hasmapto('<Plug>VCSAdd')
-  nmap <unique> <Leader>ca <Plug>VCSAdd
-endif
-if !hasmapto('<Plug>VCSAnnotate')
-  nmap <unique> <Leader>cn <Plug>VCSAnnotate
-endif
-if !hasmapto('<Plug>VCSClearAndGotoOriginal')
-  nmap <unique> <Leader>cG <Plug>VCSClearAndGotoOriginal
-endif
-if !hasmapto('<Plug>VCSCommit')
-  nmap <unique> <Leader>cc <Plug>VCSCommit
-endif
-if !hasmapto('<Plug>VCSDelete')
-  nmap <unique> <Leader>cD <Plug>VCSDelete
-endif
-if !hasmapto('<Plug>VCSDiff')
-  nmap <unique> <Leader>cd <Plug>VCSDiff
-endif
-if !hasmapto('<Plug>VCSGotoOriginal')
-  nmap <unique> <Leader>cg <Plug>VCSGotoOriginal
-endif
-if !hasmapto('<Plug>VCSInfo')
-  nmap <unique> <Leader>ci <Plug>VCSInfo
-endif
-if !hasmapto('<Plug>VCSLock')
-  nmap <unique> <Leader>cL <Plug>VCSLock
-endif
-if !hasmapto('<Plug>VCSLog')
-  nmap <unique> <Leader>cl <Plug>VCSLog
-endif
-if !hasmapto('<Plug>VCSRevert')
-  nmap <unique> <Leader>cq <Plug>VCSRevert
-endif
-if !hasmapto('<Plug>VCSReview')
-  nmap <unique> <Leader>cr <Plug>VCSReview
-endif
-if !hasmapto('<Plug>VCSStatus')
-  nmap <unique> <Leader>cs <Plug>VCSStatus
-endif
-if !hasmapto('<Plug>VCSUnlock')
-  nmap <unique> <Leader>cU <Plug>VCSUnlock
-endif
-if !hasmapto('<Plug>VCSUpdate')
-  nmap <unique> <Leader>cu <Plug>VCSUpdate
-endif
-if !hasmapto('<Plug>VCSVimDiff')
-  nmap <unique> <Leader>cv <Plug>VCSVimDiff
+
+if !VCSCommandGetOption('VCSCommandDisableMappings', 0)
+  if !hasmapto('<Plug>VCSAdd')
+    nmap <unique> <Leader>ca <Plug>VCSAdd
+  endif
+  if !hasmapto('<Plug>VCSAnnotate')
+    nmap <unique> <Leader>cn <Plug>VCSAnnotate
+  endif
+  if !hasmapto('<Plug>VCSClearAndGotoOriginal')
+    nmap <unique> <Leader>cG <Plug>VCSClearAndGotoOriginal
+  endif
+  if !hasmapto('<Plug>VCSCommit')
+    nmap <unique> <Leader>cc <Plug>VCSCommit
+  endif
+  if !hasmapto('<Plug>VCSDelete')
+    nmap <unique> <Leader>cD <Plug>VCSDelete
+  endif
+  if !hasmapto('<Plug>VCSDiff')
+    nmap <unique> <Leader>cd <Plug>VCSDiff
+  endif
+  if !hasmapto('<Plug>VCSGotoOriginal')
+    nmap <unique> <Leader>cg <Plug>VCSGotoOriginal
+  endif
+  if !hasmapto('<Plug>VCSInfo')
+    nmap <unique> <Leader>ci <Plug>VCSInfo
+  endif
+  if !hasmapto('<Plug>VCSLock')
+    nmap <unique> <Leader>cL <Plug>VCSLock
+  endif
+  if !hasmapto('<Plug>VCSLog')
+    nmap <unique> <Leader>cl <Plug>VCSLog
+  endif
+  if !hasmapto('<Plug>VCSRevert')
+    nmap <unique> <Leader>cq <Plug>VCSRevert
+  endif
+  if !hasmapto('<Plug>VCSReview')
+    nmap <unique> <Leader>cr <Plug>VCSReview
+  endif
+  if !hasmapto('<Plug>VCSStatus')
+    nmap <unique> <Leader>cs <Plug>VCSStatus
+  endif
+  if !hasmapto('<Plug>VCSUnlock')
+    nmap <unique> <Leader>cU <Plug>VCSUnlock
+  endif
+  if !hasmapto('<Plug>VCSUpdate')
+    nmap <unique> <Leader>cu <Plug>VCSUpdate
+  endif
+  if !hasmapto('<Plug>VCSVimDiff')
+    nmap <unique> <Leader>cv <Plug>VCSVimDiff
+  endif
 endif
 
 " Section: Menu items {{{1

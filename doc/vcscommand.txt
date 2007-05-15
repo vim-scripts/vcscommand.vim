@@ -400,6 +400,8 @@ The following variables are available:
 |VCSCommandCVSExec|
 |VCSCommandDeleteOnHide|
 |VCSCommandDiffSplit|
+|VCSCommandDisableMappings|
+|VCSCommandDisableExtensionMappings|
 |VCSCommandEdit|
 |VCSCommandEnableBufferSetup|
 |VCSCommandResultBufferNameExtension|
@@ -436,6 +438,17 @@ VCSCommandDiffSplit				*VCSCommandDiffSplit*
 
 This variable overrides the |VCSCommandSplit| variable, but only for buffers
 created with |:VCSVimDiff|.
+
+VCSCommandDisableMappings			*VCSCommandDisableMappings*
+
+This variable, if set to a non-zero value, prevents the default command
+mappings from being set.  This supercedes 
+|VCSCommandDisableExtensionMappings|.
+
+VCSCommandDisableExtensionMappings	*VCSCommandDisableExtensionMappings*
+
+This variable, if set to a non-zero value, prevents the default command
+mappings from being set for commands specific to an individual VCS.
 
 VCSCommandEdit					*VCSCommandEdit*
 

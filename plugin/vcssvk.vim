@@ -39,8 +39,7 @@ endif
 
 runtime plugin/vcscommand.vim
 
-call system(VCSCommandGetOption('VCSCommandSVKExec', 'svk') . ' --version')
-if v:shell_error
+if !executable(VCSCommandGetOption('VCSCommandSVKExec', 'svk'))
   " SVK is not installed
   finish
 endif

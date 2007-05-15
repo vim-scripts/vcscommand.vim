@@ -46,8 +46,7 @@ endif
 
 runtime plugin/vcscommand.vim
 
-call system(VCSCommandGetOption('VCSCommandSVNExec', 'svn') . ' --version')
-if v:shell_error
+if !executable(VCSCommandGetOption('VCSCommandSVNExec', 'svn'))
   " SVN is not installed
   finish
 endif
@@ -158,7 +157,6 @@ function! s:svnFunctions.Diff(argList)
   endif
 
   let svnDiffOpt = VCSCommandGetOption('VCSCommandSVNDiffOpt', '')
-
   if svnDiffOpt == ''
     let diffOptions = []
   else

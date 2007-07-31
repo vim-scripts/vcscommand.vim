@@ -2,7 +2,7 @@
 "
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
-" Version:       Beta 18
+" Version:       Beta 19
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2007 Bob Hiestand
@@ -277,6 +277,9 @@ if v:version < 700
   echohl WarningMsg|echomsg 'VCSCommand requires at least VIM 7.0'|echohl None
   finish
 endif
+
+let s:save_cpo=&cpo
+set cpo&vim
 
 " Section: Event group setup {{{1
 
@@ -1218,3 +1221,5 @@ augroup END
 let loaded_VCSCommand = 2
 
 silent do VCSCommand User VCSPluginFinish
+
+let &cpo = s:save_cpo

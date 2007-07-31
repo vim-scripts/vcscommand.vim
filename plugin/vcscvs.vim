@@ -79,9 +79,15 @@
 "   This variable, if set, determines the options passed to the cvs diff
 "   command.  If not set, it defaults to 'u'.
 
+" Section: Plugin header {{{1
+
 if v:version < 700
+  echohl WarningMsg|echomsg 'VCSCommand requires at least VIM 7.0'|echohl None
   finish
 endif
+
+let s:save_cpo=&cpo
+set cpo&vim
 
 runtime plugin/vcscommand.vim
 
@@ -411,3 +417,5 @@ amenu <silent> &Plugin.VCS.CVS.WatchRemove <Plug>CVSWatchRemove
 
 " Section: Plugin Registration {{{1
 call VCSCommandRegisterModule('CVS', expand('<sfile>'), s:cvsFunctions, s:cvsExtensionMappings)
+
+let &cpo = s:save_cpo

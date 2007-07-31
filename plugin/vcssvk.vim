@@ -33,9 +33,15 @@
 "   This variable specifies the SVK executable.  If not set, it defaults to
 "   'svk' executed from the user's executable path.
 
+" Section: Plugin header {{{1
+
 if v:version < 700
+  echohl WarningMsg|echomsg 'VCSCommand requires at least VIM 7.0'|echohl None
   finish
 endif
+
+let s:save_cpo=&cpo
+set cpo&vim
 
 runtime plugin/vcscommand.vim
 
@@ -248,3 +254,5 @@ endfunction
 
 " Section: Plugin Registration {{{1
 call VCSCommandRegisterModule('SVK', expand('<sfile>'), s:svkFunctions, [])
+
+let &cpo = s:save_cpo

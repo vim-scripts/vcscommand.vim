@@ -99,11 +99,13 @@ vcscommand defines the following commands:
 
 |:VCSAdd|
 |:VCSAnnotate|
+|:VCSBlame|
 |:VCSCommit|
 |:VCSDelete|
 |:VCSDiff|
 |:VCSGotoOriginal|
 |:VCSLog|
+|:VCSRemove|
 |:VCSRevert|
 |:VCSReview|
 |:VCSStatus|
@@ -145,6 +147,10 @@ necessary.
 The filetype of the vcscommand scratch buffer is set to one of 'CVSAnnotate',
 'SVNAnnotate', or 'SVKAnnotate' as appropriate, to take advantage of the
 bundled syntax files.
+
+:VCSBlame						*:VCSBlame*
+
+Alias for |:VCSAnnotate|.
 
 :VCSCommit[!]						*:VCSCommit*
 
@@ -218,6 +224,10 @@ Displays the version history of the current file in a new scratch buffer.  If
 there is one parameter supplied, it is taken as as a revision parameters to be
 passed through to the underlying VCS.  Otherwise, all parameters are passed to
 the underlying VCS.
+
+:VCSRemove						*:VCSRemove*
+
+Alias for |:VCSDelete|.
 
 :VCSRevert						*:VCSRevert*
 
@@ -317,14 +327,17 @@ default (no-argument) form of each command.
 <Leader>ca VCSAdd
 <Leader>cn VCSAnnotate
 <Leader>cc VCSCommit
+<Leader>cD VCSDelete
 <Leader>cd VCSDiff
 <Leader>cg VCSGotoOriginal
 <Leader>cG VCSGotoOriginal!
 <Leader>ci VCSInfo
 <Leader>cl VCSLog
+<Leader>cL VCSLock
 <Leader>cr VCSReview
 <Leader>cs VCSStatus
 <Leader>cu VCSUpdate
+<Leader>cU VCSUnlock
 <Leader>cv VCSVimDiff
 
 Only for CVS buffers:

@@ -114,6 +114,22 @@ function! s:DoCommand(cmd, cmdName, statusText)
   endif
 endfunction
 
+" Function: GetRevision() {{{2
+" Function for retrieving the current buffer's revision number.
+" Returns: Revision number or an empty string if an error occurs.
+
+function! GetRevision()
+  if !exists('b:VCSCommandBufferInfo')
+    let b:VCSCommandBufferInfo =  s:cvsFunctions.GetBufferInfo()
+  endif
+
+  if len(b:VCSCommandBufferInfo) > 0
+    return b:VCSCommandBufferInfo[0]
+  else
+    return ''
+  endif
+endfunction
+
 " Section: VCS function implementations {{{1
 
 " Function: s:cvsFunctions.Identify(buffer) {{{2
@@ -167,7 +183,7 @@ function! s:cvsFunctions.Annotate(argList)
       " CVS defaults to pulling HEAD, regardless of current branch.
       " Therefore, always pass desired revision.
       let caption = ''
-      let options = ['-r' .  VCSCommandGetRevision()]
+      let options = ['-r' .  GetRevision()]
     endif
   elseif len(a:argList) == 1 && a:argList[0] !~ '^-'
     let caption = a:argList[0]

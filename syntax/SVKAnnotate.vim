@@ -24,7 +24,7 @@
 " IN THE SOFTWARE.
 
 if exists("b:current_syntax")
-  finish
+	finish
 endif
 
 syn match svkDate /\d\{4}-\d\{1,2}-\d\{1,2}/ skipwhite contained
@@ -33,10 +33,10 @@ syn match svkVer /^\s*\d\+/ contained nextgroup=svkName skipwhite
 syn region svkHead start=/^/ end="):" contains=svkVer,svkName,svkDate oneline
 
 if !exists("did_svkannotate_syntax_inits")
-  let did_svkannotate_syntax_inits = 1
-  hi link svkName Type
-  hi link svkDate Comment
-  hi link svkVer Statement
+	let did_svkannotate_syntax_inits = 1
+	hi link svkName Type
+	hi link svkDate Comment
+	hi link svkVer Statement
 endif
 
 let b:current_syntax="svkAnnotate"

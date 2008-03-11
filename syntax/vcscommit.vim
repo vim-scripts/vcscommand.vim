@@ -23,7 +23,7 @@
 " IN THE SOFTWARE.
 
 if exists("b:current_syntax")
-  finish
+	finish
 endif
 
 syntax region vcsComment start="^VCS: " end="$"

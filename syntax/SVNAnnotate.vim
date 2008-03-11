@@ -24,7 +24,7 @@
 " IN THE SOFTWARE.
 
 if exists("b:current_syntax")
-  finish
+	finish
 endif
 
 syn match svnName /\S\+/ contained
@@ -32,9 +32,9 @@ syn match svnVer /^\s\+\zs\d\+/ contained nextgroup=svnName skipwhite
 syn match svnHead /^\s\+\d\+\s\+\S\+/ contains=svnVer,svnName
 
 if !exists("did_svnannotate_syntax_inits")
-  let did_svnannotate_syntax_inits = 1
-  hi link svnName Type
-  hi link svnVer Statement
+	let did_svnannotate_syntax_inits = 1
+	hi link svnName Type
+	hi link svnVer Statement
 endif
 
 let b:current_syntax="svnAnnotate"

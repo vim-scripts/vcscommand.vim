@@ -180,9 +180,20 @@ function! s:gitFunctions.GetBufferInfo()
 			let branch = substitute(branch, '^refs/heads/', '', '')
 		endif
 
-		let description = substitute(system(VCSCommandGetOption('VCSCommandGitExec', 'git') . ' describe --all'), '\n$', '', '')
+		let info = [branch]
 
-		return[branch, description]
+		for method in split(VCSCommandGetOption('VCSCommandGitDescribeArgList', (',tags,all,always')), ',', 1)
+			if method != ''
+				let method = ' --' . method
+			endif
+			let tag = substitute(system(VCSCommandGetOption('VCSCommandGitExec', 'git') . ' describe' . method), '\n$', '', '')
+			if !v:shell_error
+				call add(info, tag)
+				break
+			endif
+		endfor
+
+		return info
 	finally
 		call VCSCommandChdir(oldCwd)
 	endtry

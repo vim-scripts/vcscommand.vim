@@ -2,10 +2,10 @@
 "
 " Vim plugin to assist in working with files under control of CVS or SVN.
 "
-" Version:       Beta 22
+" Version:       Beta 24
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
-" Copyright (c) 2007 Bob Hiestand
+" Copyright (c) 2008 Bob Hiestand
 "
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to
@@ -451,14 +451,16 @@ function! s:EditFile(command, originalBuffer, statusText)
 				vert rightbelow split
 			endif
 		endif
-		edit `=resultBufferName`
+
+		enew
+
 		let b:VCSCommandCommand = a:command
 		let b:VCSCommandOriginalBuffer = a:originalBuffer
 		let b:VCSCommandSourceFile = bufname(a:originalBuffer)
 		let b:VCSCommandVCSType = vcsType
 
-		set buftype=nofile
-		set noswapfile
+		setlocal buftype=nofile
+		setlocal noswapfile
 		let &filetype = vcsType . a:command
 
 		if a:statusText != ''
@@ -466,12 +468,12 @@ function! s:EditFile(command, originalBuffer, statusText)
 		endif
 
 		if VCSCommandGetOption('VCSCommandDeleteOnHide', 0)
-			set bufhidden=delete
+			setlocal bufhidden=delete
 		endif
+		silent noautocmd file `=resultBufferName`
 	finally
 		let s:isEditFileRunning -= 1
 	endtry
-
 endfunction
 
 " Function: s:SetupBuffer() {{{2
@@ -635,7 +637,7 @@ function! s:VCSCommit(bang, message)
 		endif
 
 		call s:EditFile('commitlog', originalBuffer, '')
-		set ft=vcscommit
+		setlocal ft=vcscommit
 
 		" Create a commit mapping.
 
@@ -646,14 +648,14 @@ function! s:VCSCommit(bang, message)
 		silent put ='VCS: To finish the commit, Type <leader>cc (or your own <Plug>VCSCommit mapping)'
 
 		if VCSCommandGetOption('VCSCommandCommitOnWrite', 1) == 1
-			set buftype=acwrite
+			setlocal buftype=acwrite
 			au VCSCommandCommit BufWriteCmd <buffer> call s:VCSFinishCommitWithBuffer()
 			silent put ='VCS: or write this buffer'
 		endif
 
 		silent put ='VCS: ----------------------------------------------------------------------'
 		$
-		set nomodified
+		setlocal nomodified
 	catch
 		call s:ReportError(v:exception)
 		return -1
@@ -665,7 +667,7 @@ endfunction
 " which removes all lines starting with 'VCS:'.
 
 function! s:VCSFinishCommitWithBuffer()
-	set nomodified
+	setlocal nomodified
 	let currentBuffer = bufnr('%') 
 	let logMessageList = getbufline('%', 1, '$')
 	call filter(logMessageList, 'v:val !~ ''^\s*VCS:''')

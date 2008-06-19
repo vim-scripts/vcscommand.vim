@@ -229,7 +229,7 @@ function! s:gitFunctions.Review(argList)
 	endtry
 
 	let prefix = substitute(prefix, '\n$', '', '')
-	let blob = revision . ':' . prefix . '<VCSCOMMANDFILE>' 
+	let blob = '"' . revision . ':' . prefix . '<VCSCOMMANDFILE>"'
 	let resultBuffer = s:DoCommand('show ' . blob, 'review', revision, {})
 	if resultBuffer > 0
 		let &filetype=getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
@@ -239,7 +239,7 @@ endfunction
 
 " Function: s:gitFunctions.Status(argList) {{{2
 function! s:gitFunctions.Status(argList)
-	return s:DoCommand(join(['status'] + a:argList), 'log', join(a:argList), {'allowNonZeroExit': 1})
+	return s:DoCommand(join(['status'] + a:argList), 'status', join(a:argList), {'allowNonZeroExit': 1})
 endfunction
 
 " Function: s:gitFunctions.Update(argList) {{{2

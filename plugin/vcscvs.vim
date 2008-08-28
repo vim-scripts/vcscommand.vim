@@ -403,14 +403,14 @@ com! CVSWatchers call s:CVSWatchers()
 
 let s:cvsExtensionMappings = {}
 let mappingInfo = [
-			\['CVSEdit', 'CVSEdit', 'ce'],
-			\['CVSEditors', 'CVSEditors', 'cE'],
-			\['CVSUnedit', 'CVSUnedit', 'ct'],
-			\['CVSWatchers', 'CVSWatchers', 'cwv'],
-			\['CVSWatchAdd', 'CVSWatch add', 'cwa'],
-			\['CVSWatchOff', 'CVSWatch off', 'cwf'],
-			\['CVSWatchOn', 'CVSWatch on', 'cwn'],
-			\['CVSWatchRemove', 'CVSWatch remove', 'cwr']
+			\['CVSEdit', 'CVSEdit', 'e'],
+			\['CVSEditors', 'CVSEditors', 'E'],
+			\['CVSUnedit', 'CVSUnedit', 't'],
+			\['CVSWatchers', 'CVSWatchers', 'wv'],
+			\['CVSWatchAdd', 'CVSWatch add', 'wa'],
+			\['CVSWatchOff', 'CVSWatch off', 'wf'],
+			\['CVSWatchOn', 'CVSWatch on', 'wn'],
+			\['CVSWatchRemove', 'CVSWatch remove', 'wr']
 			\]
 
 for [pluginName, commandText, shortCut] in mappingInfo

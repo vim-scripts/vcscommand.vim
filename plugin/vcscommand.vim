@@ -1,9 +1,10 @@
 " vim600: set foldmethod=marker:
 "
-" Vim plugin to assist in working with files under control of CVS or SVN.
+" Vim plugin to assist in working with files under control of various Version
+" Control Systems, such as CVS, SVN, SVK, and git.
 "
-" Version:       Beta 26
-" Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
+" Version:	Beta 27
+" Maintainer:	Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2008 Bob Hiestand
 "
@@ -207,6 +208,16 @@
 "   information in the status bar.  Additional options may be set by
 "   individual VCS plugins.
 "
+" VCSCommandMappings
+"   This variable, if set, overrides the default mappings used for shortcuts.
+"   It should be a List of 2-element Lists, each containing a shortcut and
+"   function name pair.
+"
+" VCSCommandMapPrefix
+"   This variable, if set, overrides the default mapping prefix ('<Leader>c').
+"   This allows customization of the mapping space used by the vcscommand
+"   shortcuts.
+"
 " VCSCommandResultBufferNameExtension
 "   This variable, if set to a non-blank value, is appended to the name of the
 "   VCS command output buffers.  For example, '.vcs'.  Using this option may
@@ -329,6 +340,27 @@ unlet! s:vimDiffScratchList
 
 function! s:ReportError(error)
 	echohl WarningMsg|echomsg 'VCSCommand:  ' . a:error|echohl None
+endfunction
+
+
+" Function: s:CreateMapping(shortcut, expansion, display) {{{2
+" Creates the given mapping by prepending the contents of
+" 'VCSCommandMapPrefix' (by default '<Leader>c') to the given shortcut and
+" mapping it to the given plugin function.  If a mapping exists for the
+" specified shortcut + prefix, emit an error but continue.  If a mapping
+" exists for the specified function, do nothing.
+
+function! s:CreateMapping(shortcut, expansion, display)
+	let lhs = VCSCommandGetOption('VCSCommandMapPrefix', '<Leader>c') . a:shortcut
+	if !hasmapto(a:expansion)
+		try
+			execute 'nmap <silent> <unique>' lhs a:expansion
+		catch /^Vim(.*):E227:/
+			if(&verbose != 0)
+				echohl WarningMsg|echomsg 'VCSCommand:  mapping ''' . lhs . ''' already exists, refusing to overwrite.  The mapping for ' . a:display . ' will not be available.'|echohl None
+			endif
+		endtry
+	endif
 endfunction
 
 " Function: s:ExecuteExtensionMapping(mapping) {{{2
@@ -930,8 +962,9 @@ function! VCSCommandRegisterModule(name, path, commandMap, mappingMap)
 	if !empty(a:mappingMap)
 				\ && !VCSCommandGetOption('VCSCommandDisableMappings', 0)
 				\ && !VCSCommandGetOption('VCSCommandDisableExtensionMappings', 0)
-		for mapname in keys(a:mappingMap)
-			execute 'noremap <silent> <Leader>' . mapname ':call <SID>ExecuteExtensionMapping(''' . mapname . ''')<CR>'
+		for shortcut in keys(a:mappingMap)
+			let expansion = ":call <SID>ExecuteExtensionMapping('" . shortcut . "')<CR>"
+			call s:CreateMapping(shortcut, expansion, a:name . " extension mapping " . shortcut)
 		endfor
 	endif
 endfunction
@@ -1144,55 +1177,29 @@ nnoremap <silent> <Plug>VCSVimDiff :VCSVimDiff<CR>
 
 " Section: Default mappings {{{1
 
+let s:defaultMappings = [
+			\['a', 'VCSAdd'],
+			\['c', 'VCSCommit'],
+			\['D', 'VCSDelete'],
+			\['d', 'VCSDiff'],
+			\['G', 'VCSClearAndGotoOriginal'],
+			\['g', 'VCSGotoOriginal'],
+			\['i', 'VCSInfo'],
+			\['L', 'VCSLock'],
+			\['l', 'VCSLog'],
+			\['n', 'VCSAnnotate'],
+			\['q', 'VCSRevert'],
+			\['r', 'VCSReview'],
+			\['s', 'VCSStatus'],
+			\['U', 'VCSUnlock'],
+			\['u', 'VCSUpdate'],
+			\['v', 'VCSVimDiff'],
+			\]
+
 if !VCSCommandGetOption('VCSCommandDisableMappings', 0)
-	if !hasmapto('<Plug>VCSAdd')
-		nmap <unique> <Leader>ca <Plug>VCSAdd
-	endif
-	if !hasmapto('<Plug>VCSAnnotate')
-		nmap <unique> <Leader>cn <Plug>VCSAnnotate
-	endif
-	if !hasmapto('<Plug>VCSClearAndGotoOriginal')
-		nmap <unique> <Leader>cG <Plug>VCSClearAndGotoOriginal
-	endif
-	if !hasmapto('<Plug>VCSCommit')
-		nmap <unique> <Leader>cc <Plug>VCSCommit
-	endif
-	if !hasmapto('<Plug>VCSDelete')
-		nmap <unique> <Leader>cD <Plug>VCSDelete
-	endif
-	if !hasmapto('<Plug>VCSDiff')
-		nmap <unique> <Leader>cd <Plug>VCSDiff
-	endif
-	if !hasmapto('<Plug>VCSGotoOriginal')
-		nmap <unique> <Leader>cg <Plug>VCSGotoOriginal
-	endif
-	if !hasmapto('<Plug>VCSInfo')
-		nmap <unique> <Leader>ci <Plug>VCSInfo
-	endif
-	if !hasmapto('<Plug>VCSLock')
-		nmap <unique> <Leader>cL <Plug>VCSLock
-	endif
-	if !hasmapto('<Plug>VCSLog')
-		nmap <unique> <Leader>cl <Plug>VCSLog
-	endif
-	if !hasmapto('<Plug>VCSRevert')
-		nmap <unique> <Leader>cq <Plug>VCSRevert
-	endif
-	if !hasmapto('<Plug>VCSReview')
-		nmap <unique> <Leader>cr <Plug>VCSReview
-	endif
-	if !hasmapto('<Plug>VCSStatus')
-		nmap <unique> <Leader>cs <Plug>VCSStatus
-	endif
-	if !hasmapto('<Plug>VCSUnlock')
-		nmap <unique> <Leader>cU <Plug>VCSUnlock
-	endif
-	if !hasmapto('<Plug>VCSUpdate')
-		nmap <unique> <Leader>cu <Plug>VCSUpdate
-	endif
-	if !hasmapto('<Plug>VCSVimDiff')
-		nmap <unique> <Leader>cv <Plug>VCSVimDiff
-	endif
+	for [shortcut, vcsFunction] in VCSCommandGetOption('VCSCommandMappings', s:defaultMappings)
+		call s:CreateMapping(shortcut, '<Plug>' . vcsFunction, '''' . vcsFunction . '''')
+	endfor
 endif
 
 " Section: Menu items {{{1

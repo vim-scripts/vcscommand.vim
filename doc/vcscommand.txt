@@ -424,6 +424,7 @@ The following variables are available:
 |VCSCommandCVSExec|
 |VCSCommandDeleteOnHide|
 |VCSCommandDiffSplit|
+|VCSCommandDisableAll|
 |VCSCommandDisableMappings|
 |VCSCommandDisableExtensionMappings|
 |VCSCommandEdit|
@@ -464,6 +465,12 @@ VCSCommandDiffSplit				*VCSCommandDiffSplit*
 
 This variable overrides the |VCSCommandSplit| variable, but only for buffers
 created with |:VCSVimDiff|.
+
+VCSCommandDisableAll				*VCSCommandDisableAll*
+
+This variable, if set, prevents the plugin or any extensions from loading at
+all.  This is useful when a single runtime distribution is used on multiple
+systems with varying versions.
 
 VCSCommandDisableMappings			*VCSCommandDisableMappings*
 
@@ -532,7 +539,8 @@ may occur.
 If set to 'horizontal', the resulting windows will be on stacked on top of
 one another.  If set to 'vertical', the resulting windows will be
 side-by-side.  If not set, it defaults to 'horizontal' for all but
-VCSVimDiff windows.
+VCSVimDiff windows.  VCSVimDiff windows default to the user's 'diffopt'
+setting, if set, otherwise 'vertical'.
 
 VCSCommandSVKExec				*VCSCommandSVKExec*
 

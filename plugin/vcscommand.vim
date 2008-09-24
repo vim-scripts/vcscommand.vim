@@ -3,7 +3,7 @@
 " Vim plugin to assist in working with files under control of various Version
 " Control Systems, such as CVS, SVN, SVK, and git.
 "
-" Version:	Beta 27
+" Version:	Beta 28
 " Maintainer:	Bob Hiestand <bob.hiestand@gmail.com>
 " License:
 " Copyright (c) 2008 Bob Hiestand
@@ -188,6 +188,11 @@
 "   This variable overrides the VCSCommandSplit variable, but only for buffers
 "   created with VCSVimDiff.
 "
+" VCSCommandDisableAll
+"   This variable, if set, prevents the plugin or any extensions from loading
+"   at all.  This is useful when a single runtime distribution is used on
+"   multiple systems with varying versions.
+"
 " VCSCommandDisableMappings
 "   This variable, if set to a non-zero value, prevents the default command
 "   mappings from being set.
@@ -282,6 +287,10 @@
 " loaded_VCSCommand is set to 1 when the initialization begins, and 2 when it
 " completes.  This allows various actions to only be taken by functions after
 " system initialization.
+
+if exists('VCSCommandDisableAll')
+	finish
+endif
 
 if exists('loaded_VCSCommand')
 	finish
@@ -772,6 +781,10 @@ function! s:VCSVimDiff(...)
 				call s:WipeoutCommandBuffers(s:vimDiffSourceBuffer, 'vimdiff')
 			endif
 
+			let orientation = &diffopt =~ 'horizontal' ? 'horizontal' : 'vertical'
+			let orientation = VCSCommandGetOption('VCSCommandSplit', orientation)
+			let orientation = VCSCommandGetOption('VCSCommandDiffSplit', orientation)
+
 			" Split and diff
 			if(a:0 == 2)
 				" Reset the vimdiff system, as 2 explicit versions were provided.
@@ -788,7 +801,7 @@ function! s:VCSVimDiff(...)
 				let s:vimDiffScratchList = [resultBuffer]
 				" If no split method is defined, cheat, and set it to vertical.
 				try
-					call s:OverrideOption('VCSCommandSplit', VCSCommandGetOption('VCSCommandDiffSplit', VCSCommandGetOption('VCSCommandSplit', 'vertical')))
+					call s:OverrideOption('VCSCommandSplit', orientation)
 					let resultBuffer = s:plugins[vcsType][1].Review([a:2])
 				finally
 					call s:OverrideOption('VCSCommandSplit')
@@ -805,7 +818,7 @@ function! s:VCSVimDiff(...)
 				call s:OverrideOption('VCSCommandEdit', 'split')
 				try
 					" Force splitting behavior, otherwise why use vimdiff?
-					call s:OverrideOption('VCSCommandSplit', VCSCommandGetOption('VCSCommandDiffSplit', VCSCommandGetOption('VCSCommandSplit', 'vertical')))
+					call s:OverrideOption('VCSCommandSplit', orientation)
 					try
 						if(a:0 == 0)
 							let resultBuffer = s:plugins[vcsType][1].Review([])

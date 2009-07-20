@@ -3,8 +3,8 @@
 " Vim plugin to assist in working with files under control of various Version
 " Control Systems, such as CVS, SVN, SVK, and git.
 "
+" Version:       Beta 30
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
-" Version:       Beta 29
 " License:
 " Copyright (c) 2008 Bob Hiestand
 "

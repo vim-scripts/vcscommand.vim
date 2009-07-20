@@ -583,7 +583,7 @@ For instance, the following could be added to the vimrc to provide a 'q'
 mapping to quit a vcscommand scratch buffer:
 
 augroup VCSCommand
-  au User VCSBufferCreated silent! nmap <unique> <buffer> q: bwipeout<cr>
+  au User VCSBufferCreated silent! nmap <unique> <buffer> q :bwipeout<cr>
 augroup END
 
 The following hooks are available:

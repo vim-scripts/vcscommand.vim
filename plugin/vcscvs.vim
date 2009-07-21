@@ -401,6 +401,9 @@ function! s:CVSWatchers()
 	return s:DoCommand('watchers', 'cvswatchers', '', {})
 endfunction
 
+" Annotate setting {{{2
+let s:cvsFunctions.AnnotateSplitRegex = '): '
+
 " Section: Command definitions {{{1
 " Section: Primary commands {{{2
 com! CVSEdit call s:CVSEdit()

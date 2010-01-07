@@ -35,13 +35,14 @@
 
 " Section: Plugin header {{{1
 
+if exists('VCSCommandDisableAll')
+	finish
+endif
+
 if v:version < 700
   echohl WarningMsg|echomsg 'VCSCommand requires at least VIM 7.0'|echohl None
   finish
 endif
-
-let s:save_cpo=&cpo
-set cpo&vim
 
 runtime plugin/vcscommand.vim
 
@@ -50,18 +51,28 @@ if !executable(VCSCommandGetOption('VCSCommandBZRExec', 'bzr'))
   finish
 endif
 
+let s:save_cpo=&cpo
+set cpo&vim
+
 " Section: Variable initialization {{{1
 
 let s:bzrFunctions = {}
 
 " Section: Utility functions {{{1
 
+" Function: s:Executable() {{{2
+" Returns the executable used to invoke bzr suitable for use in a shell
+" command.
+function! s:Executable()
+	return shellescape(VCSCommandGetOption('VCSCommandBZRExec', 'bzr'))
+endfunction
+
 " Function: s:DoCommand(cmd, cmdName, statusText) {{{2
 " Wrapper to VCSCommandDoCommand to add the name of the BZR executable to the
 " command argument.
 function! s:DoCommand(cmd, cmdName, statusText, options)
   if VCSCommandGetVCSType(expand('%')) == 'BZR'
-    let fullCmd = VCSCommandGetOption('VCSCommandBZRExec', 'bzr') . ' ' . a:cmd
+    let fullCmd = s:Executable() . ' ' . a:cmd
     return VCSCommandDoCommand(fullCmd, a:cmdName, a:statusText, a:options)
   else
     throw 'BZR VCSCommand plugin called on non-BZR item.'
@@ -73,7 +84,7 @@ endfunction
 " Function: s:bzrFunctions.Identify(buffer) {{{2
 function! s:bzrFunctions.Identify(buffer)
   let fileName = resolve(bufname(a:buffer))
-  let statusText = system(VCSCommandGetOption('VCSCommandBZRExec', 'bzr') . ' info "' . fileName . '"')
+  let statusText = s:VCSCommandUtility.system(s:Executable() . ' info -- "' . fileName . '"')
   if(v:shell_error)
     return 0
   else
@@ -158,8 +169,8 @@ endfunction
 function! s:bzrFunctions.GetBufferInfo()
   let originalBuffer = VCSCommandGetOriginalBuffer(bufnr('%'))
   let fileName = resolve(bufname(originalBuffer))
-  let statusText = system(VCSCommandGetOption('VCSCommandBZRExec', 'bzr') . ' status -S "' . fileName . '"')
-  let revision = system(VCSCommandGetOption('VCSCommandBZRExec', 'bzr') . ' revno "' . fileName . '"')
+  let statusText = s:VCSCommandUtility.system(s:Executable() . ' status -S -- "' . fileName . '"')
+  let revision = s:VCSCommandUtility.system(s:Executable() . ' revno -- "' . fileName . '"')
   if(v:shell_error)
     return []
   endif
@@ -248,7 +259,10 @@ function! s:bzrFunctions.Update(argList)
   return s:DoCommand('update', 'update', '', {})
 endfunction
 
+" Annotate setting {{{2
+let s:bzrFunctions.AnnotateSplitRegex = '^[^|]\+ | '
+
 " Section: Plugin Registration {{{1
-call VCSCommandRegisterModule('BZR', expand('<sfile>'), s:bzrFunctions, [])
+let s:VCSCommandUtility = VCSCommandRegisterModule('BZR', expand('<sfile>'), s:bzrFunctions, [])
 
 let &cpo = s:save_cpo

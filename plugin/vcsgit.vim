@@ -65,12 +65,19 @@ let s:gitFunctions = {}
 
 " Section: Utility functions {{{1
 
+" Function: s:Executable() {{{2
+" Returns the executable used to invoke git suitable for use in a shell
+" command.
+function! s:Executable()
+	return shellescape(VCSCommandGetOption('VCSCommandGitExec', 'git'))
+endfunction
+
 " Function: s:DoCommand(cmd, cmdName, statusText, options) {{{2
 " Wrapper to VCSCommandDoCommand to add the name of the git executable to the
 " command argument.
 function! s:DoCommand(cmd, cmdName, statusText, options)
 	if VCSCommandGetVCSType(expand('%')) == 'git'
-		let fullCmd = VCSCommandGetOption('VCSCommandGitExec', 'git',) . ' ' . a:cmd
+		let fullCmd = s:Executable() . ' ' . a:cmd
 		return VCSCommandDoCommand(fullCmd, a:cmdName, a:statusText, a:options)
 	else
 		throw 'git VCSCommand plugin called on non-git item.'
@@ -85,7 +92,7 @@ endfunction
 function! s:gitFunctions.Identify(buffer)
 	let oldCwd = VCSCommandChangeToCurrentFileDir(resolve(bufname(a:buffer)))
 	try
-		call system(VCSCommandGetOption('VCSCommandGitExec', 'git') . ' rev-parse --is-inside-work-tree')
+		call s:VCSCommandUtility.system(s:Executable() . ' rev-parse --is-inside-work-tree')
 		if(v:shell_error)
 			return 0
 		else
@@ -116,7 +123,7 @@ function! s:gitFunctions.Annotate(argList)
 		let options = join(a:argList, ' ')
 	endif
 
-	let resultBuffer = s:DoCommand('blame ' . options . ' -- ', 'annotate', options, {})
+	let resultBuffer = s:DoCommand('blame ' . options, 'annotate', options, {})
 	if resultBuffer > 0
 		normal 1G
 		set filetype=gitAnnotate
@@ -177,7 +184,7 @@ endfunction
 function! s:gitFunctions.GetBufferInfo()
 	let oldCwd = VCSCommandChangeToCurrentFileDir(resolve(bufname('%')))
 	try
-		let branch = substitute(system(VCSCommandGetOption('VCSCommandGitExec', 'git') . ' symbolic-ref -q HEAD'), '\n$', '', '')
+		let branch = substitute(s:VCSCommandUtility.system(s:Executable() . ' symbolic-ref -q HEAD'), '\n$', '', '')
 		if v:shell_error
 			let branch = 'DETACHED'
 		else
@@ -190,7 +197,7 @@ function! s:gitFunctions.GetBufferInfo()
 			if method != ''
 				let method = ' --' . method
 			endif
-			let tag = substitute(system(VCSCommandGetOption('VCSCommandGitExec', 'git') . ' describe' . method), '\n$', '', '')
+			let tag = substitute(s:VCSCommandUtility.system(s:Executable() . ' describe' . method), '\n$', '', '')
 			if !v:shell_error
 				call add(info, tag)
 				break
@@ -227,7 +234,7 @@ function! s:gitFunctions.Review(argList)
 
 	let oldCwd = VCSCommandChangeToCurrentFileDir(resolve(bufname(VCSCommandGetOriginalBuffer('%'))))
 	try
-		let prefix = system(VCSCommandGetOption('VCSCommandGitExec', 'git') . ' rev-parse --show-prefix')
+		let prefix = s:VCSCommandUtility.system(s:Executable() . ' rev-parse --show-prefix')
 	finally
 		call VCSCommandChdir(oldCwd)
 	endtry
@@ -255,6 +262,6 @@ endfunction
 let s:gitFunctions.AnnotateSplitRegex = ') '
 
 " Section: Plugin Registration {{{1
-call VCSCommandRegisterModule('git', expand('<sfile>'), s:gitFunctions, [])
+let s:VCSCommandUtility = VCSCommandRegisterModule('git', expand('<sfile>'), s:gitFunctions, [])
 
 let &cpo = s:save_cpo

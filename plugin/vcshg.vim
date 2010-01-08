@@ -117,11 +117,11 @@ function! s:hgFunctions.Annotate(argList)
 			let options = ' -r' . caption
 		else
 			let caption = ''
-			let options = ''
+			let options = ' -un'
 		endif
 	elseif len(a:argList) == 1 && a:argList[0] !~ '^-'
 		let caption = a:argList[0]
-		let options = ' -r' . caption
+		let options = ' -un -r' . caption
 	else
 		let caption = join(a:argList, ' ')
 		let options = ' ' . caption
@@ -211,10 +211,10 @@ function! s:hgFunctions.GetBufferInfo()
 	endif
 
 	let parentsText = s:VCSCommandUtility.system(s:Executable() . ' parents -- "' . fileName . '"')
-	let [revision] = matchlist(parentsText, '^changeset:\s\+\(\S\+\)\n')[1]
+	let revision = matchlist(parentsText, '^changeset:\s\+\(\S\+\)\n')[1]
 
 	let logText = s:VCSCommandUtility.system(s:Executable() . ' log -- "' . fileName . '"')
-	let [repository] = matchlist(logText, '^changeset:\s\+\(\S\+\)\n')[1]
+	let repository = matchlist(logText, '^changeset:\s\+\(\S\+\)\n')[1]
 
 	if revision == ''
 		" Error
@@ -280,6 +280,9 @@ endfunction
 function! s:hgFunctions.Update(argList)
 	return s:DoCommand('update', 'update', '', {})
 endfunction
+
+" Annotate setting {{{2
+let s:hgFunctions.AnnotateSplitRegex = '\d\+: '
 
 " Section: Plugin Registration {{{1
 let s:VCSCommandUtility = VCSCommandRegisterModule('HG', expand('<sfile>'), s:hgFunctions, [])

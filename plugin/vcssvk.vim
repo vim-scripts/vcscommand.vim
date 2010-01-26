@@ -89,7 +89,7 @@ function! s:svkFunctions.Identify(buffer)
 	else
 		let directoryName = fnamemodify(fileName, ':p:h')
 	endif
-	let statusText = s:VCSCommandUtility.system(s:Executable() . ' info -- "' . directoryName . '"')
+	let statusText = s:VCSCommandUtility.system(s:Executable() . ' info -- "' . directoryName . '"', "no")
 	if(v:shell_error)
 		return 0
 	else

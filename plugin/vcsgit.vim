@@ -111,7 +111,7 @@ endfunction
 " Function: s:gitFunctions.Annotate(argList) {{{2
 function! s:gitFunctions.Annotate(argList)
 	if len(a:argList) == 0
-		if &filetype == 'gitAnnotate'
+		if &filetype == 'gitannotate'
 			" Perform annotation of the version indicated by the current line.
 			let options = matchstr(getline('.'),'^\x\+')
 		else
@@ -123,12 +123,7 @@ function! s:gitFunctions.Annotate(argList)
 		let options = join(a:argList, ' ')
 	endif
 
-	let resultBuffer = s:DoCommand('blame ' . options, 'annotate', options, {})
-	if resultBuffer > 0
-		normal 1G
-		set filetype=gitAnnotate
-	endif
-	return resultBuffer
+	return s:DoCommand('blame ' . options, 'annotate', options, {})
 endfunction
 
 " Function: s:gitFunctions.Commit(argList) {{{2
@@ -165,13 +160,7 @@ function! s:gitFunctions.Diff(argList)
 		endfor
 	endif
 
-	let resultBuffer = s:DoCommand(join(['diff'] + diffOptions + a:argList), 'diff', join(a:argList), {})
-	if resultBuffer > 0
-		set filetype=diff
-	else
-		echomsg 'No differences found'
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['diff'] + diffOptions + a:argList), 'diff', join(a:argList), {})
 endfunction
 
 " Function: s:gitFunctions.GetBufferInfo() {{{2
@@ -212,11 +201,7 @@ endfunction
 
 " Function: s:gitFunctions.Log() {{{2
 function! s:gitFunctions.Log(argList)
-	let resultBuffer=s:DoCommand(join(['log'] + a:argList), 'log', join(a:argList, ' '), {})
-	if resultBuffer > 0
-		set filetype=gitlog
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['log'] + a:argList), 'log', join(a:argList, ' '), {})
 endfunction
 
 " Function: s:gitFunctions.Revert(argList) {{{2
@@ -241,11 +226,7 @@ function! s:gitFunctions.Review(argList)
 
 	let prefix = substitute(prefix, '\n$', '', '')
 	let blob = '"' . revision . ':' . prefix . '<VCSCOMMANDFILE>"'
-	let resultBuffer = s:DoCommand('show ' . blob, 'review', revision, {})
-	if resultBuffer > 0
-		let &filetype=getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
-	endif
-	return resultBuffer
+	return s:DoCommand('show ' . blob, 'review', revision, {})
 endfunction
 
 " Function: s:gitFunctions.Status(argList) {{{2

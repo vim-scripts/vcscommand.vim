@@ -116,7 +116,7 @@ endfunction
 " Function: s:svnFunctions.Annotate(argList) {{{2
 function! s:svnFunctions.Annotate(argList)
 	if len(a:argList) == 0
-		if &filetype == 'SVNAnnotate'
+		if &filetype == 'SVNannotate'
 			" Perform annotation of the version indicated by the current line.
 			let caption = matchstr(getline('.'),'\v^\s+\zs\d+')
 			let options = ' -r' . caption
@@ -132,11 +132,7 @@ function! s:svnFunctions.Annotate(argList)
 		let options = ' ' . caption
 	endif
 
-	let resultBuffer = s:DoCommand('blame --non-interactive' . options, 'annotate', caption, {})
-	if resultBuffer > 0
-		set filetype=SVNAnnotate
-	endif
-	return resultBuffer
+	return s:DoCommand('blame --non-interactive' . options, 'annotate', caption, {})
 endfunction
 
 " Function: s:svnFunctions.Commit(argList) {{{2
@@ -180,15 +176,7 @@ function! s:svnFunctions.Diff(argList)
 		let diffOptions = ['-x -' . svnDiffOpt]
 	endif
 
-	let resultBuffer = s:DoCommand(join(['diff --non-interactive'] + diffExt + diffOptions + revOptions), 'diff', caption, {})
-	if resultBuffer > 0
-		set filetype=diff
-	else
-		if svnDiffExt == ''
-			echomsg 'No differences found'
-		endif
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['diff --non-interactive'] + diffExt + diffOptions + revOptions), 'diff', caption, {})
 endfunction
 
 " Function: s:svnFunctions.GetBufferInfo() {{{2
@@ -264,11 +252,7 @@ function! s:svnFunctions.Review(argList)
 		let versionOption = ' -r ' . versiontag . ' '
 	endif
 
-	let resultBuffer = s:DoCommand('cat --non-interactive' . versionOption, 'review', versiontag, {})
-	if resultBuffer > 0
-		let &filetype = getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
-	endif
-	return resultBuffer
+	return s:DoCommand('cat --non-interactive' . versionOption, 'review', versiontag, {})
 endfunction
 
 " Function: s:svnFunctions.Status(argList) {{{2

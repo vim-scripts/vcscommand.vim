@@ -111,7 +111,7 @@ endfunction
 " Function: s:hgFunctions.Annotate(argList) {{{2
 function! s:hgFunctions.Annotate(argList)
 	if len(a:argList) == 0
-		if &filetype == 'HGAnnotate'
+		if &filetype == 'HGannotate'
 			" Perform annotation of the version indicated by the current line.
 			let caption = matchstr(getline('.'),'\v^\s+\zs\d+')
 			let options = ' -r' . caption
@@ -127,11 +127,7 @@ function! s:hgFunctions.Annotate(argList)
 		let options = ' ' . caption
 	endif
 
-	let resultBuffer = s:DoCommand('blame' . options, 'annotate', caption, {})
-	if resultBuffer > 0
-		set filetype=HGAnnotate
-	endif
-	return resultBuffer
+	return s:DoCommand('blame' . options, 'annotate', caption, {})
 endfunction
 
 " Function: s:hgFunctions.Commit(argList) {{{2
@@ -175,15 +171,7 @@ function! s:hgFunctions.Diff(argList)
 		let diffOptions = ['-x -' . hgDiffOpt]
 	endif
 
-	let resultBuffer = s:DoCommand(join(['diff'] + diffExt + diffOptions + revOptions), 'diff', caption, {})
-	if resultBuffer > 0
-		set filetype=diff
-	else
-		if hgDiffExt == ''
-			echomsg 'No differences found'
-		endif
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['diff'] + diffExt + diffOptions + revOptions), 'diff', caption, {})
 endfunction
 
 " Function: s:hgFunctions.Info(argList) {{{2
@@ -259,12 +247,7 @@ function! s:hgFunctions.Review(argList)
 		let versionOption = ' -r ' . versiontag . ' '
 	endif
 
-"	let resultBuffer = s:DoCommand('cat --non-interactive' . versionOption, 'review', versiontag, {})
-	let resultBuffer = s:DoCommand('cat' . versionOption, 'review', versiontag, {})
-	if resultBuffer > 0
-		let &filetype = getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
-	endif
-	return resultBuffer
+	return s:DoCommand('cat' . versionOption, 'review', versiontag, {})
 endfunction
 
 " Function: s:hgFunctions.Status(argList) {{{2

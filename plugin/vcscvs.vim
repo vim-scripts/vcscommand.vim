@@ -181,7 +181,7 @@ endfunction
 " Function: s:cvsFunctions.Annotate(argList) {{{2
 function! s:cvsFunctions.Annotate(argList)
 	if len(a:argList) == 0
-		if &filetype == 'CVSAnnotate'
+		if &filetype == 'CVSannotate'
 			" This is a CVSAnnotate buffer.  Perform annotation of the version
 			" indicated by the current line.
 			let caption = matchstr(getline('.'),'\v^[0-9.]+')
@@ -216,7 +216,6 @@ function! s:cvsFunctions.Annotate(argList)
 
 	let resultBuffer = s:DoCommand(join(['-q', 'annotate'] + options), 'annotate', caption, {})
 	if resultBuffer > 0
-		set filetype=CVSAnnotate
 		" Remove header lines from standard error
 		silent v/^\d\+\%(\.\d\+\)\+/d
 	endif
@@ -266,13 +265,7 @@ function! s:cvsFunctions.Diff(argList)
 		let diffOptions = ['-' . cvsDiffOpt]
 	endif
 
-	let resultBuffer = s:DoCommand(join(['diff'] + diffOptions + revOptions), 'diff', caption, {'allowNonZeroExit': 1})
-	if resultBuffer > 0
-		set filetype=diff
-	else
-		echomsg 'No differences found'
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['diff'] + diffOptions + revOptions), 'diff', caption, {'allowNonZeroExit': 1})
 endfunction
 
 " Function: s:cvsFunctions.GetBufferInfo() {{{2
@@ -338,11 +331,7 @@ function! s:cvsFunctions.Log(argList)
 		let caption = join(a:argList, ' ')
 	endif
 
-	let resultBuffer=s:DoCommand(join(['log'] + options), 'log', caption, {})
-	if resultBuffer > 0
-		set filetype=rcslog
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['log'] + options), 'log', caption, {})
 endfunction
 
 " Function: s:cvsFunctions.Revert(argList) {{{2
@@ -360,11 +349,7 @@ function! s:cvsFunctions.Review(argList)
 		let versionOption = ' -r ' . versiontag . ' '
 	endif
 
-	let resultBuffer = s:DoCommand('-q update -p' . versionOption, 'review', versiontag, {})
-	if resultBuffer > 0
-		let &filetype=getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
-	endif
-	return resultBuffer
+	return s:DoCommand('-q update -p' . versionOption, 'review', versiontag, {})
 endfunction
 
 " Function: s:cvsFunctions.Status(argList) {{{2

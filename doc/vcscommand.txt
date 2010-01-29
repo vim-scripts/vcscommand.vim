@@ -149,9 +149,8 @@ will cause the above behavior to change.  Instead of annotating the version on
 the current line, the parent revision is used instead, crossing branches if
 necessary.
 
-The filetype of the vcscommand scratch buffer is set to one of 'CVSAnnotate',
-'SVNAnnotate', 'SVKAnnotate' or 'gitAnnotate' as appropriate, to take advantage of the
-bundled syntax files.
+With no arguments the cursor will jump to the line in the annotated buffer
+corresponding to the current line in the source buffer.
 
 :VCSBlame[!]						*:VCSBlame*
 

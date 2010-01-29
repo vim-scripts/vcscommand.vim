@@ -105,7 +105,7 @@ endfunction
 " Function: s:svkFunctions.Annotate(argList) {{{2
 function! s:svkFunctions.Annotate(argList)
 	if len(a:argList) == 0
-		if &filetype == 'SVKAnnotate'
+		if &filetype == 'SVKannotate'
 			" Perform annotation of the version indicated by the current line.
 			let caption = matchstr(getline('.'),'\v^\s+\zs\d+')
 			let options = ' -r' . caption
@@ -124,7 +124,6 @@ function! s:svkFunctions.Annotate(argList)
 	let resultBuffer = s:DoCommand('blame' . options, 'annotate', caption, {})
 	if resultBuffer > 0
 		normal 1G2dd
-		set filetype=SVKAnnotate
 	endif
 	return resultBuffer
 endfunction
@@ -156,13 +155,7 @@ function! s:svkFunctions.Diff(argList)
 		let revOptions = a:argList
 	endif
 
-	let resultBuffer = s:DoCommand(join(['diff'] + revOptions), 'diff', caption, {})
-	if resultBuffer > 0
-		set filetype=diff
-	else
-		echomsg 'No differences found'
-	endif
-	return resultBuffer
+	return s:DoCommand(join(['diff'] + revOptions), 'diff', caption, {})
 endfunction
 
 " Function: s:svkFunctions.GetBufferInfo() {{{2
@@ -238,11 +231,7 @@ function! s:svkFunctions.Review(argList)
 		let versionOption = ' -r ' . versiontag . ' '
 	endif
 
-	let resultBuffer = s:DoCommand('cat' . versionOption, 'review', versiontag, {})
-	if resultBuffer > 0
-		let &filetype=getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
-	endif
-	return resultBuffer
+	return s:DoCommand('cat' . versionOption, 'review', versiontag, {})
 endfunction
 
 " Function: s:svkFunctions.Status(argList) {{{2

@@ -548,7 +548,7 @@ function! s:SetupScratchBuffer(command, vcsType, originalBuffer, statusText)
 
 	setlocal buftype=nofile
 	setlocal noswapfile
-	let &filetype = a:vcsType . a:command
+	let &filetype = tolower(a:vcsType . a:command)
 
 	if VCSCommandGetOption('VCSCommandDeleteOnHide', 0)
 		setlocal bufhidden=delete

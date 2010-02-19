@@ -906,7 +906,7 @@ function! s:VCSVimDiff(...)
 				if exists('s:vimDiffSourceBuffer')
 					call s:WipeoutCommandBuffers(s:vimDiffSourceBuffer, 'vimdiff')
 				endif
-				let resultBuffer = s:plugins[vcsType][1].Review([a:1])
+				let resultBuffer = s:VCSReview(a:1)
 				if resultBuffer < 0
 					echomsg 'Can''t open revision ' . a:1
 					return resultBuffer
@@ -917,7 +917,7 @@ function! s:VCSVimDiff(...)
 				" If no split method is defined, cheat, and set it to vertical.
 				try
 					call s:OverrideOption('VCSCommandSplit', orientation)
-					let resultBuffer = s:plugins[vcsType][1].Review([a:2])
+					let resultBuffer = s:VCSReview(a:2)
 				finally
 					call s:OverrideOption('VCSCommandSplit')
 				endtry
@@ -936,9 +936,9 @@ function! s:VCSVimDiff(...)
 					call s:OverrideOption('VCSCommandSplit', orientation)
 					try
 						if(a:0 == 0)
-							let resultBuffer = s:plugins[vcsType][1].Review([])
+							let resultBuffer = s:VCSReview()
 						else
-							let resultBuffer = s:plugins[vcsType][1].Review([a:1])
+							let resultBuffer = s:VCSReview(a:1)
 						endif
 					finally
 						call s:OverrideOption('VCSCommandSplit')

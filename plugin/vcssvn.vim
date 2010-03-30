@@ -198,12 +198,14 @@ function! s:svnFunctions.GetBufferInfo()
 		return ['Unknown']
 	endif
 
-	let [flags, revision, repository] = matchlist(statusText, '^\(.\{8}\)\s\+\(\S\+\)\s\+\(\S\+\)\s\+\(\S\+\)\s')[1:3]
+	let [flags, revision, repository] = matchlist(statusText, '^\(.\{9}\)\s*\(\d\+\)\s\+\(\d\+\)')[1:3]
 	if revision == ''
 		" Error
 		return ['Unknown']
 	elseif flags =~ '^A'
 		return ['New', 'New']
+	elseif flags =~ '*'
+		return [revision, repository, '*']
 	else
 		return [revision, repository]
 	endif

@@ -469,7 +469,7 @@ function! s:GenerateResultBufferName(command, originalBuffer, vcsType, statusTex
 	let bufferName .= ' ' . fileName
 	let counter = 0
 	let versionedBufferName = bufferName
-	while buflisted(versionedBufferName)
+	while bufexists(versionedBufferName)
 		let counter += 1
 		let versionedBufferName = bufferName . ' (' . counter . ')'
 	endwhile
@@ -489,7 +489,7 @@ function! s:GenerateResultBufferNameWithExtension(command, originalBuffer, vcsTy
 	let bufferName .= ' ' . fileName . VCSCommandGetOption('VCSCommandResultBufferNameExtension', '.vcs')
 	let counter = 0
 	let versionedBufferName = bufferName
-	while buflisted(versionedBufferName)
+	while bufexists(versionedBufferName)
 		let counter += 1
 		let versionedBufferName = '(' . counter . ') ' . bufferName
 	endwhile

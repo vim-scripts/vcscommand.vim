@@ -128,11 +128,11 @@ endfunction
 
 " Function: s:gitFunctions.Commit(argList) {{{2
 function! s:gitFunctions.Commit(argList)
-	let resultBuffer = s:DoCommand('commit -F "' . a:argList[0] . '"', 'commit', '', {})
-	if resultBuffer == 0
+	try
+		return s:DoCommand('commit -F "' . a:argList[0] . '"', 'commit', '', {})
+	catch /\m^Version control command failed.*nothing\%( added\)\? to commit/
 		echomsg 'No commit needed.'
-	endif
-	return resultBuffer
+	endtry
 endfunction
 
 " Function: s:gitFunctions.Delete() {{{2

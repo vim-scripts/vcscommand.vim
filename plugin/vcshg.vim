@@ -105,7 +105,7 @@ endfunction
 
 " Function: s:hgFunctions.Add() {{{2
 function! s:hgFunctions.Add(argList)
-	return s:DoCommand(join(['add'] + a:argList, ' '), 'add', join(a:argList, ' '), {})
+	return s:DoCommand(join(['add -v'] + a:argList, ' '), 'add', join(a:argList, ' '), {})
 endfunction
 
 " Function: s:hgFunctions.Annotate(argList) {{{2
@@ -132,10 +132,7 @@ endfunction
 
 " Function: s:hgFunctions.Commit(argList) {{{2
 function! s:hgFunctions.Commit(argList)
-	let resultBuffer = s:DoCommand('commit -l "' . a:argList[0] . '"', 'commit', '', {})
-	if resultBuffer == 0
-		echomsg 'No commit needed.'
-	endif
+	return s:DoCommand('commit -v -l "' . a:argList[0] . '"', 'commit', '', {})
 endfunction
 
 " Function: s:hgFunctions.Delete() {{{2
@@ -252,8 +249,8 @@ endfunction
 
 " Function: s:hgFunctions.Status(argList) {{{2
 function! s:hgFunctions.Status(argList)
-	let options = ['-u', '-v']
-	if len(a:argList) == 0
+	let options = ['-A', '-v']
+	if len(a:argList) != 0
 		let options = a:argList
 	endif
 	return s:DoCommand(join(['status'] + options, ' '), 'status', join(options, ' '), {})

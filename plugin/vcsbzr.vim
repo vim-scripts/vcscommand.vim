@@ -239,7 +239,7 @@ endfunction
 " Function: s:bzrFunctions.Status(argList) {{{2
 function! s:bzrFunctions.Status(argList)
   let options = ['-S']
-  if len(a:argList) == 0
+  if len(a:argList) != 0
     let options = a:argList
   endif
   return s:DoCommand(join(['status'] + options, ' '), 'status', join(options, ' '), {})

@@ -2,10 +2,9 @@
 "
 " Mercurial extension for VCSCommand.
 "
-" Version:       VCS development
 " Maintainer:    Bob Hiestand <bob.hiestand@gmail.com>
 " License:
-" Copyright (c) 2009 Bob Hiestand
+" Copyright (c) Bob Hiestand
 "
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to
@@ -132,7 +131,11 @@ endfunction
 
 " Function: s:hgFunctions.Commit(argList) {{{2
 function! s:hgFunctions.Commit(argList)
-	return s:DoCommand('commit -v -l "' . a:argList[0] . '"', 'commit', '', {})
+	try
+		return s:DoCommand('commit -v -l "' . a:argList[0] . '"', 'commit', '', {})
+	catch /Version control command failed.*nothing changed/
+		echomsg 'No commit needed.'
+	endtry
 endfunction
 
 " Function: s:hgFunctions.Delete() {{{2

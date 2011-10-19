@@ -820,7 +820,15 @@ function! s:VCSAnnotate(bang, ...)
 			endif
 			let originalFileType = getbufvar(originalBuffer, '&ft')
 			let annotateFileType = getbufvar(annotateBuffer, '&ft')
-			execute "normal! 0zR\<c-v>G/" . splitRegex . "/e\<cr>d"
+
+			let saveselection = &selection
+			set selection=inclusive
+			try
+				execute "normal! 0zR\<c-v>G/" . splitRegex . "/e\<cr>d"
+			finally
+				let &selection = saveselection
+			endtry
+
 			call setbufvar('%', '&filetype', getbufvar(originalBuffer, '&filetype'))
 			set scrollbind
 			leftabove vert new

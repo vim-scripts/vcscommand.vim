@@ -65,7 +65,7 @@ let s:bzrFunctions = {}
 " Returns the executable used to invoke bzr suitable for use in a shell
 " command.
 function! s:Executable()
-	return VCSCommandGetOption('VCSCommandBZRExec', 'bzr')
+	return shellescape(VCSCommandGetOption('VCSCommandBZRExec', 'bzr'))
 endfunction
 
 " Function: s:DoCommand(cmd, cmdName, statusText) {{{2

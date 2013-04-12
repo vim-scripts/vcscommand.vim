@@ -111,7 +111,7 @@ let s:cvsFunctions = {}
 " Returns the executable used to invoke cvs suitable for use in a shell
 " command.
 function! s:Executable()
-	return VCSCommandGetOption('VCSCommandCVSExec', 'cvs')
+	return shellescape(VCSCommandGetOption('VCSCommandCVSExec', 'cvs'))
 endfunction
 
 " Function: s:DoCommand(cmd, cmdName, statusText, options) {{{2

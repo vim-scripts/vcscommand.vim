@@ -72,7 +72,7 @@ let s:svnFunctions = {}
 " Returns the executable used to invoke git suitable for use in a shell
 " command.
 function! s:Executable()
-	return VCSCommandGetOption('VCSCommandSVNExec', 'svn')
+	return shellescape(VCSCommandGetOption('VCSCommandSVNExec', 'svn'))
 endfunction
 
 " Function: s:DoCommand(cmd, cmdName, statusText, options) {{{2
@@ -192,6 +192,10 @@ function! s:svnFunctions.GetBufferInfo()
 	" File not under SVN control.
 	if statusText =~ '^?'
 		return ['Unknown']
+	endif
+	" File explicitly ignored by SVN.
+	if statusText =~ '^I'
+		return ['Ignored']
 	endif
 
 	let [flags, revision, repository] = matchlist(statusText, '^\(.\{9}\)\s*\(\d\+\)\s\+\(\d\+\)')[1:3]

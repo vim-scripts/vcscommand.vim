@@ -980,6 +980,9 @@ function! s:VCSReview(...)  "{{{2
 		let resultBuffer = s:ExecuteVCSCommand('Review', a:000)
 		if resultBuffer > 0
 			let &filetype = getbufvar(b:VCSCommandOriginalBuffer, '&filetype')
+			" ans: {
+			let &fileencoding = getbufvar(b:VCSCommandOriginalBuffer, '&fileencoding')
+			" ans: }
 		endif
 		return resultBuffer
 	finally
